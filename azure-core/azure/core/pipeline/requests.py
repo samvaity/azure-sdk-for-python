@@ -44,10 +44,8 @@ from ..exceptions import (
     ClientRequestError,
     raise_with_traceback
 )
-from ..universal_http import ClientRequest
-from ..universal_http.requests import BasicRequestsHTTPSender
-from . import HTTPSender, HTTPPolicy, Response, Request
-
+from ..pipeline import ClientRequest
+from . import ClientResponse, HTTPSender, HTTPSenderConfiguration, HTTPPolicy, Response, Request, StreamableClientResponse
 
 _LOGGER = logging.getLogger(__name__)
 

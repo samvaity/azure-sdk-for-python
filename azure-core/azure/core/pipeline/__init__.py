@@ -52,6 +52,12 @@ except ImportError: # Python <= 3.5
             """Raise any exception triggered within the runtime context."""
             return None
 
+# This file is NOT using any "requests" HTTP implementation
+# However, the CaseInsensitiveDict is handy.
+# If one day we reach the point where "requests" can be skip totally,
+# might provide our own implementation
+from requests.structures import CaseInsensitiveDict
+
 class HTTPPolicy(ABC, Generic[HTTPRequestType, HTTPResponseType]):
     """An http policy ABC.
     """
