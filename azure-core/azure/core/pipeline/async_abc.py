@@ -26,7 +26,13 @@
 # --------------------------------------------------------------------------
 import abc
 
-from typing import Any, List, Union, Callable, AsyncIterator, Optional
+from typing import Any, List, Union, Callable, AsyncIterator, Optional, Generic, TypeVar
+
+from . import Request, Response, Pipeline, SansIOHTTPPolicy
+
+
+AsyncHTTPResponseType = TypeVar("AsyncHTTPResponseType")
+HTTPRequestType = TypeVar("HTTPRequestType")
 
 try:
     from contextlib import AbstractAsyncContextManager  # type: ignore

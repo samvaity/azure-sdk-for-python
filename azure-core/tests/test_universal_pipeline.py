@@ -42,7 +42,7 @@ from azure.core.pipeline import (
 )
 from azure.core.pipeline.requests import RequestsClientResponse
 
-from azure.core.pipeline.universal import (
+from azure.core.pipeline.universal_policies import (
     HTTPLogger,
     RawDeserializer,
     UserAgentPolicy

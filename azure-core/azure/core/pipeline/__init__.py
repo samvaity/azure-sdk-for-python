@@ -25,8 +25,14 @@
 # --------------------------------------------------------------------------
 
 import abc
+import json
 import logging
-
+import os.path
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
+import xml.etree.ElementTree as ET
 from typing import TYPE_CHECKING, Generic, TypeVar, cast, IO, List, Union, Any, Mapping, Dict, Optional, Tuple, Callable, Iterator  # pylint: disable=unused-import
 
 HTTPResponseType = TypeVar("HTTPResponseType")
