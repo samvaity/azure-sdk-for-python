@@ -25,3 +25,20 @@
 # --------------------------------------------------------------------------
 
 __version__ = "0.0.1"
+
+
+
+def get_pipeline(self, credentials, configuration=None, transport=None, **kwargs):
+    ## TODO: Talk to Johan about default tracing policy?
+    # type: () -> Pipeline[ClientRequest, RequestsClientResponse]
+
+    policies = [
+        UserAgentPolicy(),  # UserAgent policy
+        credentials,
+        HTTPLogger()  # HTTP request/response log
+    ]  # type: List[Union[HTTPPolicy, SansIOHTTPPolicy]]
+
+    return Pipeline(
+        policies,
+        PipelineRequestsHTTPSender(RequestsHTTPSender(self.config))  # Send HTTP request using requests
+    )

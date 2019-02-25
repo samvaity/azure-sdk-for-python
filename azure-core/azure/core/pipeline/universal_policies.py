@@ -130,6 +130,7 @@ class RawDeserializer(SansIOHTTPPolicy):
     
     # TODO: Discuss concept of mandatory pipeline policy.
     # What impact will this have on constructing custom pipelines.
+    # Why does this not get a default in sync pipeline?
 
     JSON_MIMETYPES = [
         'application/json',

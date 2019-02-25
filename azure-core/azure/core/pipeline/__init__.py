@@ -55,7 +55,7 @@ except ImportError: # Python <= 3.5
 class HTTPPolicy(ABC, Generic[HTTPRequestType, HTTPResponseType]):
     """An http policy ABC.
     """
-    def __init__(self):
+    def __init__(self, configuration=None):
         self.next = None
 
     @abc.abstractmethod
