@@ -103,9 +103,9 @@ class PipelineRequestsHTTPSender(HTTPSender):  # TODO: I think this can be delet
     """Implements a basic Pipeline, that supports universal HTTP lib "requests" driver.
     """
 
-    def __init__(self, universal_http_requests_driver=None):
+    def __init__(self, configuration, universal_http_requests_driver=None):
         # type: (Optional[BasicRequestsHTTPSender]) -> None
-        self.driver = universal_http_requests_driver or BasicRequestsHTTPSender()
+        self.driver = universal_http_requests_driver or BasicRequestsHTTPSender(configuration)
 
     def __enter__(self):
         # type: () -> PipelineRequestsHTTPSender
@@ -289,10 +289,10 @@ class RequestsHTTPSender(BasicRequestsHTTPSender):
         'cert'
     ]
 
-    def __init__(self, config=None):
-        # type: (Optional[RequestHTTPSenderConfiguration]) -> None
+    def __init__(self, configuration):
+        # type: (Configuration) -> None
         self._session_mapping = threading.local()
-        self.config = config or RequestHTTPSenderConfiguration()
+        self.config = configuration
         super(RequestsHTTPSender, self).__init__()
 
     @property  # type: ignore
@@ -371,7 +371,7 @@ class RequestsHTTPSender(BasicRequestsHTTPSender):
         if hooks:
             requests_kwargs['hooks'] = {'response': hooks}
 
-        # Configuration callback. Deprecated, should be a policy
+        # Configuration callback. Deprecated, should be a policy  # TODO What is this used for? Need to keep?
         output_kwargs = self.config.session_configuration_callback(
             session,
             self.config,
@@ -420,23 +420,3 @@ class RequestsHTTPSender(BasicRequestsHTTPSender):
         """
         requests_kwargs = self._configure_send(request, **kwargs)
         return super(RequestsHTTPSender, self).send(request, **requests_kwargs)
-
-
-class RequestHTTPSenderConfiguration(HTTPSenderConfiguration):  # TODO: Remove
-    """Requests specific HTTP sender configuration.
-
-    :param str filepath: Path to existing config file (optional).
-    """
-
-    def __init__(self, filepath=None):
-        # type: (Optional[str]) -> None
-
-        super(RequestHTTPSenderConfiguration, self).__init__()
-
-        # Retry configuration
-        self.retry_policy = ClientRetryPolicy()
-
-        # Requests hooks. Must respect requests hook callback signature
-        # Note that we will inject the following parameters:
-        # - kwargs['msrest']['session'] with the current session
-        self.hooks = []  # type: List[Callable[[requests.Response, str, str], None]]
