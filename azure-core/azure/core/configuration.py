@@ -26,8 +26,64 @@
 
 
 class Configuration(object):
-    pass
+    """Add proxy.
+
+    :param str protocol: Protocol for which proxy is to be applied. Can
+        be 'http', 'https', etc. Can also include host.
+    :param str proxy_url: The proxy URL. Where basic auth is required,
+        use the format: http://user:password@host
+    """
 
     @classmethod
-    def from_dict(cls):
+    def from_dict(cls, dict_values):
+        return cls(**dict_values)
+
+    @classmethod
+    def from_file(cls, filepath):
         pass
+
+    def to_dict(self):
+        dict_values = self.__dict__
+        dict_values.pop('to_dict')
+        dict_values.pop('from_dict')
+        return dict_values
+
+    def __init__(self, **kwargs):
+        # Communication configuration - TODO: applied per session?
+        self.connection_timeout = kwargs.pop('connection_timeout', 100)
+        self.connection_verify = kwargs.pop('connection_verify', True)
+        self.connection_cert = kwargs.pop('connection_cert', None)
+        self.connection_data_block_size = kwargs.pop('connection_data_block_size', 4096)
+        self.connection_keep_alive = kwargs.pop('connection_keep_alive', False)
+        # self.connection_cookies  # TODO: Ask Laurent how this is used/configured
+        # self.connection_hooks  # TODO: Should this be exposed here? Or a pipeline policy?
+
+        # Headers (sent with every requests)
+        self.headers = kwargs.pop('headers', {})  # type: Dict[str, str]
+
+        # ProxyConfiguration
+        self.proxies = kwargs.pop('proxies', {})
+        self.proxies_use_env_settings = kwargs.pop('proxies_use_env_settings', True)
+
+        # Redirect configuration
+        self.redirect_allow = kwargs.pop('redirect_allow', True)
+        self.redirect_max = kwargs.pop('redirect_max', 30)
+
+        # Retry configuration  # TODO: Revisit whether this is a policy or transport configuration
+        safe_codes = [i for i in range(500) if i != 408] + [501, 505]
+        self.retry_status_codes = kwargs.pop('retry_status_codes', [i for i in range(999) if i not in safe_codes])
+        self.retry_count_total = kwargs.pop('retry_count_total', 3)
+        self.retry_count_connect = kwargs.pop('retry_count_connect', 3)
+        self.retry_count_read = kwargs.pop('retry_count_read', 3)
+        self.retry_backoff_factor = kwargs.pop('retry_backoff_factor', 0.8)  # TODO: Is this value universal
+        self.retry_backoff_max = kwargs.pop('retry_backoff_max', 90)  # TODO: Standardized value?
+
+        # Logger configuration
+        self.logging_enable = kwargs.pop('logging_enable', False)
+
+        # User Agent configuration
+        self.user_agent = kwargs.pop('user_agent', None)
+        self.user_agent_overwrite = kwargs.pop('user_agent_overwrite', False)
+
+        if kwargs:
+            raise ValueError("Unrecognized configuration settings: {}".format(kwargs))

@@ -8,9 +8,12 @@ from azure.core import Pipeline, RequestsHttpSender
 
 class HTTPSender
 
-configuration.transport = something
-pipeline = get_pipeline(credentials, configuration)
-pipeline = get_pipeline(credentialsconfiguration, transport=MyTransport)
+
+my_config = Configuration(redirect_allow=True, redirect_max=30)
+
+
+pipeline = get_pipeline(credentials, my_config)
+pipeline = get_async_pipeline(credentials, my_config)
 
 
 
