@@ -9,8 +9,7 @@
 # regenerated.
 # --------------------------------------------------------------------------
 
-# TODO: need msrest.paging.Paged or equivalent
-from msrest.paging import Paged
+from azure.core.paging import Paged
 
 
 class StorageAccountPaged(Paged):

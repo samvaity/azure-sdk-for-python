@@ -31,9 +31,8 @@ from .list_account_sas_response import ListAccountSasResponse
 from .service_sas_parameters import ServiceSasParameters
 from .list_service_sas_response import ListServiceSasResponse
 
-# TODO: need msrest.paging.Paged or equivalent
-# from .storage_account_paged import StorageAccountPaged
-# from .usage_paged import UsagePaged
+from .storage_account_paged import StorageAccountPaged
+from .usage_paged import UsagePaged
 
 from .storage_management_client_enums import (
     Reason,
@@ -70,8 +69,8 @@ __all__ = [
     'ListAccountSasResponse',
     'ServiceSasParameters',
     'ListServiceSasResponse',
-    # 'StorageAccountPaged',
-    # 'UsagePaged',
+    'StorageAccountPaged',
+    'UsagePaged',
     'Reason',
     'SkuName',
     'SkuTier',
