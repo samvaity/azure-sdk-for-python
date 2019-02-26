@@ -45,7 +45,7 @@ from ..exceptions import (
     raise_with_traceback
 )
 from ..pipeline import ClientRequest
-from . import ClientResponse, HTTPSender, HTTPSenderConfiguration, HTTPPolicy, Response, Request, StreamableClientResponse
+from . import ClientResponse, HTTPSender, HTTPPolicy, Response, Request, StreamableClientResponse
 
 _LOGGER = logging.getLogger(__name__)
 

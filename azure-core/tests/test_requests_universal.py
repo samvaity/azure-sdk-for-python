@@ -29,14 +29,10 @@ from requests.adapters import HTTPAdapter
 
 from azure.core.pipeline import ClientRequest
 
-from azure.core.pipeline.requests import (
-    BasicRequestsHTTPSender,
-    RequestsHTTPSender,
-    RequestHTTPSenderConfiguration,
-)
+from azure.core.pipeline.requests import BasicRequestsHTTPSender, RequestsHTTPSender
 
 
-@pytest.mark.skip("TODO: RequestHTTPSenderConfiguration will likely be removed")
+@pytest.mark.skip("TODO: RequestHTTPSenderConfiguration removed")
 def test_session_callback():
 
     cfg = RequestHTTPSenderConfiguration()
@@ -57,7 +53,7 @@ def test_session_callback():
         assert output_kwargs["used_callback"]
 
 
-@pytest.mark.skip("TODO: RequestHTTPSenderConfiguration will likely be removed")
+@pytest.mark.skip("TODO: RequestHTTPSenderConfiguration removed")
 def test_max_retries_on_default_adapter():
     # max_retries must be applied only on the default adapters of requests
     # If the user adds its own adapter, don't touch it
@@ -93,7 +89,7 @@ def test_threading_basic_requests():
         assert future.result()
 
 
-@pytest.mark.skip("TODO: RequestHTTPSenderConfiguration will likely be removed")
+@pytest.mark.skip("TODO: RequestHTTPSenderConfiguration removed")
 def test_threading_cfg_requests():
     cfg = RequestHTTPSenderConfiguration()
 
