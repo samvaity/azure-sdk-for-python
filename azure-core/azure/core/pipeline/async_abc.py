@@ -28,8 +28,8 @@ import abc
 
 from typing import Any, List, Union, Callable, AsyncIterator, Optional, Generic, TypeVar
 
+from azure.core.pipeline.transport.async_abc import AsyncHTTPSender
 from . import Request, Response, Pipeline, SansIOHTTPPolicy
-
 
 AsyncHTTPResponseType = TypeVar("AsyncHTTPResponseType")
 HTTPRequestType = TypeVar("HTTPRequestType")

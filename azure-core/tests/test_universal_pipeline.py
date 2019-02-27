@@ -34,15 +34,16 @@ import pytest
 
 from azure.core.exceptions import DeserializationError
 from azure.core.pipeline import (
-    ClientRequest,
-    ClientResponse,
     Response,
     Request,
-    StreamableClientResponse,
 )
-from azure.core.pipeline.requests import RequestsClientResponse
+from azure.core.pipeline.transport import (
+    _TransportRequest,
+    _TransportResponse,
+)
+from azure.core.pipeline.transport.requests import RequestsTransportResponse
 
-from azure.core.pipeline.universal_policies import (
+from azure.core.pipeline.policies.universal import (
     HTTPLogger,
     RawDeserializer,
     UserAgentPolicy
@@ -54,16 +55,16 @@ def test_user_agent():
         policy = UserAgentPolicy()
         assert policy.user_agent.endswith("mytools")
 
-        request = ClientRequest('GET', 'http://127.0.0.1/')
+        request = _TransportRequest('GET', 'http://127.0.0.1/')
         policy.on_request(Request(request))
         assert request.headers["user-agent"].endswith("mytools")
 
 @mock.patch('azure.core.http_logger._LOGGER')
 def test_no_log(mock_http_logger):
-    universal_request = ClientRequest('GET', 'http://127.0.0.1/')
+    universal_request = _TransportRequest('GET', 'http://127.0.0.1/')
     request = Request(universal_request)
     http_logger = HTTPLogger()
-    response = Response(request, ClientResponse(universal_request, None))
+    response = Response(request, _TransportResponse(universal_request, None))
 
     # By default, no log handler for HTTP
     http_logger.on_request(request)
@@ -107,7 +108,7 @@ def test_raw_deserializer():
     raw_deserializer = RawDeserializer()
 
     def build_response(body, content_type=None):
-        class MockResponse(StreamableClientResponse):
+        class MockResponse(_TransportResponse):
             def __init__(self, body, content_type):
                 super(MockResponse, self).__init__(None, None)
                 self._body = body
@@ -155,7 +156,7 @@ def test_raw_deserializer():
     req_response.headers["content-type"] = "application/json"
     req_response._content = b'{"success": true}'
     req_response._content_consumed = True
-    response = Response(None, RequestsClientResponse(None, req_response))
+    response = Response(None, RequestsTransportResponse(None, req_response))
 
     raw_deserializer.on_response(None, response, stream=False)
     result = response.context["deserialized_data"]

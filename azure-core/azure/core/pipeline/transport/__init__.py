@@ -25,9 +25,23 @@
 # --------------------------------------------------------------------------
 
 import abc
+import json
 import logging
+import os
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
+import xml.etree.ElementTree as ET
+
+# This file is NOT using any "requests" HTTP implementation
+# However, the CaseInsensitiveDict is handy.
+# If one day we reach the point where "requests" can be skip totally,
+# might provide our own implementation
+from requests.structures import CaseInsensitiveDict
 
 from typing import TYPE_CHECKING, Generic, TypeVar, cast, IO, List, Union, Any, Mapping, Dict, Optional, Tuple, Callable, Iterator  # pylint: disable=unused-import
+from azure.core.exceptions import ClientRequestError
 
 HTTPResponseType = TypeVar("HTTPResponseType")
 HTTPRequestType = TypeVar("HTTPRequestType")
@@ -100,7 +114,7 @@ class _TransportRequest(object):
         self.data = data
 
     def __repr__(self):
-        return '<ClientRequest [%s]>' % (self.method)
+        return '<_TransportRequest [%s]>' % (self.method)
 
     @property
     def body(self):
@@ -203,7 +217,7 @@ class _TransportResponseBase(object):
     Full in-memory using "body" as bytes.
     """
     def __init__(self, request, internal_response):
-        # type: (ClientRequest, Any) -> None
+        # type: (_TransportRequest, Any) -> None
         self.request = request
         self.internal_response = internal_response
         self.status_code = None  # type: Optional[int]
@@ -232,7 +246,7 @@ class _TransportResponseBase(object):
             raise ClientRequestError("Received status code {}".format(self.status_code))
 
 
-class _TransportResponse(TransportResponseBase):
+class _TransportResponse(_TransportResponseBase):
 
     def stream_download(self, chunk_size=None, callback=None):
         # type: (Optional[int], Optional[Callable]) -> Iterator[bytes]

@@ -39,12 +39,10 @@ import sys
 
 import pytest
 
-from azure.core.pipeline import ClientRequest
-from azure.core.pipeline import (
+from azure.core.pipeline import Pipeline, SansIOHTTPPolicy, HTTPSender
+from azure.core.pipeline.transport import (
+    _TransportRequest,
     # ClientRawResponse, TODO: not yet copied from msrest
-    SansIOHTTPPolicy,
-    Pipeline,
-    HTTPSender,
 )
 
 from azure.core.configuration import Configuration
@@ -61,7 +59,7 @@ def test_sans_io_exception():
 
     pipeline = Pipeline([SansIOHTTPPolicy()], BrokenSender())
 
-    req = ClientRequest("GET", "/")
+    req = _TransportRequest("GET", "/")
     with pytest.raises(ValueError):
         pipeline.run(req)
 
@@ -78,7 +76,7 @@ def test_sans_io_exception():
 class TestClientRequest(unittest.TestCase):
     def test_request_data(self):
 
-        request = ClientRequest("GET", "/")
+        request = _TransportRequest("GET", "/")
         data = "Lots of dataaaa"
         request.add_content(data)
 
@@ -86,7 +84,7 @@ class TestClientRequest(unittest.TestCase):
         self.assertEqual(request.headers.get("Content-Length"), "17")
 
     def test_request_xml(self):
-        request = ClientRequest("GET", "/")
+        request = _TransportRequest("GET", "/")
         data = ET.Element("root")
         request.add_content(data)
 
@@ -94,7 +92,7 @@ class TestClientRequest(unittest.TestCase):
 
     def test_request_url_with_params(self):
 
-        request = ClientRequest("GET", "/")
+        request = _TransportRequest("GET", "/")
         request.url = "a/b/c?t=y"
         request.format_parameters({"g": "h"})
 

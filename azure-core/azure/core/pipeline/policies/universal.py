@@ -34,13 +34,13 @@ import platform
 
 from typing import Mapping, Any, Optional, AnyStr, Union, IO, cast, TYPE_CHECKING  # pylint: disable=unused-import
 
-from .. import __version__ as azcore_version
-from . import SansIOHTTPPolicy
-from ..exceptions import DeserializationError, raise_with_traceback
-from ..http_logger import log_request, log_response
+from azure.core import __version__  as azcore_version
+from .. import SansIOHTTPPolicy
+from ...exceptions import DeserializationError, raise_with_traceback
+from ...http_logger import log_request, log_response
 
 if TYPE_CHECKING:
-    from . import Request, Response  # pylint: disable=unused-import
+    from .. import Request, Response  # pylint: disable=unused-import
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -127,7 +127,7 @@ class HTTPLogger(SansIOHTTPPolicy):
 
 
 class RawDeserializer(SansIOHTTPPolicy):
-    
+
     # TODO: Discuss concept of mandatory pipeline policy.
     # What impact will this have on constructing custom pipelines.
     # Why does this not get a default in sync pipeline?

@@ -27,9 +27,9 @@ import concurrent.futures
 import pytest
 from requests.adapters import HTTPAdapter
 
-from azure.core.pipeline import ClientRequest
+from azure.core.pipeline.transport import _TransportRequest
 
-from azure.core.pipeline.requests import BasicRequestsHTTPSender, RequestsHTTPSender
+from azure.core.pipeline.transport.requests import RequestsTransport
 
 
 @pytest.mark.skip("TODO: RequestHTTPSenderConfiguration removed")
@@ -48,7 +48,7 @@ def test_session_callback():
 
         cfg.session_configuration_callback = callback
 
-        request = ClientRequest("GET", "http://127.0.0.1/")
+        request = _TransportRequest("GET", "http://127.0.0.1/")
         output_kwargs = driver._configure_send(request, **{"test": True})
         assert output_kwargs["used_callback"]
 
@@ -61,7 +61,7 @@ def test_max_retries_on_default_adapter():
     max_retries = cfg.retry_policy()
 
     with RequestsHTTPSender(cfg) as driver:
-        request = ClientRequest("GET", "/")
+        request = _TransportRequest("GET", "/")
         driver.session.mount('"http://127.0.0.1/"', HTTPAdapter())
 
         driver._configure_send(request)
@@ -75,7 +75,7 @@ def test_max_retries_on_default_adapter():
 
 def test_threading_basic_requests():
     # Basic should have the session for all threads, it's why it's not recommended
-    sender = BasicRequestsHTTPSender()
+    sender = RequestsTransport()
     main_thread_session = sender.session
 
     def thread_body(local_sender):

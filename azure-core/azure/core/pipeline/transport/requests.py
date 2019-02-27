@@ -24,6 +24,21 @@
 #
 # --------------------------------------------------------------------------
 
+import contextlib
+import requests
+import threading
+
+from azure.core.exceptions import raise_with_traceback
+
+from . import (
+    _TransportResponse,
+    _TransportResponseBase,
+    HTTPSender
+)
+
+# Matching requests, because why not?
+CONTENT_CHUNK_SIZE = 10 * 1024
+
 class RequestsContext(object):
     def __init__(self, session):
         self.session = session
@@ -32,7 +47,7 @@ class RequestsContext(object):
 class RequestsTransportResponseBase(_TransportResponseBase):
 
     def __init__(self, request, requests_response):
-        super(RequestsClientResponse, self).__init__(request, requests_response)
+        super(RequestsTransportResponse, self).__init__(request, requests_response)
         self.status_code = requests_response.status_code
         self.headers = requests_response.headers
         self.reason = requests_response.reason
@@ -88,7 +103,7 @@ class RequestsTransport(HTTPSender):
         self.config = config
 
     def __enter__(self):
-        # type: () -> BasicRequestsHTTPSender
+        # type: () -> RequestsTransport
         return self
 
     def __exit__(self, *exc_details):  # pylint: disable=arguments-differ
@@ -118,14 +133,14 @@ class RequestsTransport(HTTPSender):
         self.session.close()
 
     def send(self, request, **kwargs):
-        # type: (ClientRequest, Any) -> ClientResponse
+        # type: (_TransportRequest, Any) -> _TransportResponse
         """Send request object according to configuration.
 
         Allowed kwargs are:
         - session : will override the driver session and use yours. Should NOT be done unless really required.
         - anything else is sent straight to requests.
 
-        :param ClientRequest request: The request object to be sent.
+        :param _TransportRequest request: The request object to be sent.
         """
         try:
             response = self.session.request(
@@ -136,7 +151,7 @@ class RequestsTransport(HTTPSender):
             msg = "Error occurred in request."
             raise_with_traceback(ClientRequestError, msg, err)
 
-        return RequestsClientResponse(request, response)
+        return RequestsTransportResponse(request, response)
 
 
 def _patch_redirect(session):

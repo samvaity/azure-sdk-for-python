@@ -36,7 +36,7 @@ from .serialization import Deserializer
 from .pipeline import ClientRawResponse
 
 if TYPE_CHECKING:
-    from .universal_http import ClientResponse  # pylint: disable=unused-import
+    from .pipeline.transport import _TransportResponse  # pylint: disable=unused-import
     from .serialization import Model  # pylint: disable=unused-import
 
 if sys.version_info >= (3, 5, 2):
@@ -49,7 +49,7 @@ else:
 class Paged(AsyncPagedMixin, Iterator):
     """A container for paged REST responses.
 
-    :param ClientResponse response: server response object.
+    :param _TransportResponse response: server response object.
     :param callable command: Function to retrieve the next page of items.
     :param dict classes: A dictionary of class dependencies for
      deserialization.
@@ -59,7 +59,7 @@ class Paged(AsyncPagedMixin, Iterator):
     _attribute_map = {}  # type: Dict[str, Dict[str, Any]]
 
     def __init__(self, command, classes, raw_headers=None, **kwargs):
-        # type: (Callable[[str], ClientResponse], Dict[str, Model], Dict[str, str], Any) -> None
+        # type: (Callable[[str], _TransportResponse], Dict[str, Model], Dict[str, str], Any) -> None
         super(Paged, self).__init__(**kwargs)  # type: ignore
         # Sets next_link, current_page, and _current_page_iter_index.
         self.next_link = ""
@@ -67,7 +67,7 @@ class Paged(AsyncPagedMixin, Iterator):
         self.reset()
         self._derserializer = Deserializer(classes)
         self._get_next = command
-        self._response = None  # type: Optional[ClientResponse]
+        self._response = None  # type: Optional[_TransportResponse]
         self._raw_headers = raw_headers
 
     def __iter__(self):
