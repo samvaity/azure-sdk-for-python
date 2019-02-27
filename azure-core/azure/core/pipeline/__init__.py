@@ -33,6 +33,7 @@ try:
 except ImportError:
     from urllib.parse import urlparse
 import xml.etree.ElementTree as ET
+from .transport import HTTPSender
 from typing import TYPE_CHECKING, Generic, TypeVar, cast, IO, List, Union, Any, Mapping, Dict, Optional, Tuple, Callable, Iterator  # pylint: disable=unused-import
 
 HTTPResponseType = TypeVar("HTTPResponseType")
@@ -246,6 +247,5 @@ __all__ = [
     'Response',
     'Pipeline',
     'HTTPPolicy',
-    'SansIOHTTPPolicy',
-    'HTTPSender'
+    'SansIOHTTPPolicy'
 ]
