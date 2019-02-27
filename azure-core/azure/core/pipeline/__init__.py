@@ -173,7 +173,7 @@ class Pipeline(AbstractContextManager, Generic[HTTPRequestType, HTTPResponseType
         for index in range(len(self._impl_policies)-1):
             self._impl_policies[index].next = self._impl_policies[index+1]
         if self._impl_policies:
-            self._impl_policies[-1].next = self._sender
+            self._impl_policies[-1].next = self
 
     def __enter__(self):
         # type: () -> Pipeline
@@ -183,154 +183,19 @@ class Pipeline(AbstractContextManager, Generic[HTTPRequestType, HTTPResponseType
     def __exit__(self, *exc_details):  # pylint: disable=arguments-differ
         self._sender.__exit__(*exc_details)
 
+    def send(self, request, **kwargs):
+        return Response(
+            request,
+            self._sender.send(request.http_request, **kwargs)
+        )
+
     def run(self, request, **kwargs):
         # type: (HTTPRequestType, Any) -> Response
         context = self._sender.build_context()
         pipeline_request = Request(request, context)  # type: Request[HTTPRequestType]
-        first_node = self._impl_policies[0] if self._impl_policies else self._sender
+        first_node = self._impl_policies[0] if self._impl_policies else self
         return first_node.send(pipeline_request, **kwargs)  # type: ignore
 
-
-class HTTPSender(AbstractContextManager, ABC, Generic[HTTPRequestType, HTTPResponseType]):
-    """An http sender ABC.
-    """
-
-    @abc.abstractmethod
-    def send(self, request, **config):
-        # type: (Request[HTTPRequestType], Any) -> Response[HTTPRequestType, HTTPResponseType]
-        """Send the request using this HTTP sender.
-        """
-        pass
-
-    def build_context(self):
-        # type: () -> Any
-        """Allow the sender to build a context that will be passed
-        across the pipeline with the request.
-
-        Return type has no constraints. Implementation is not
-        required and None by default.
-        """
-        return None
-
-
-class ClientRequest(object):
-    """Represents a HTTP request.
-
-    URL can be given without query parameters, to be added later using "format_parameters".
-
-    Instance can be created without data, to be added later using "add_content"
-
-    Instance can be created without files, to be added later using "add_formdata"
-
-    :param str method: HTTP method (GET, HEAD, etc.)
-    :param str url: At least complete scheme/host/path
-    :param dict[str,str] headers: HTTP headers
-    :param files: Files list.
-    :param data: Body to be sent.
-    :type data: bytes or str.
-    """
-    def __init__(self, method, url, headers=None, files=None, data=None):
-        # type: (str, str, Mapping[str, str], Any, Any) -> None
-        self.method = method
-        self.url = url
-        self.headers = CaseInsensitiveDict(headers)
-        self.files = files
-        self.data = data
-
-    def __repr__(self):
-        return '<ClientRequest [%s]>' % (self.method)
-
-    @property
-    def body(self):
-        """Alias to data."""
-        return self.data
-
-    @body.setter
-    def body(self, value):
-        self.data = value
-
-    def format_parameters(self, params):
-        # type: (Dict[str, str]) -> None
-        """Format parameters into a valid query string.
-        It's assumed all parameters have already been quoted as
-        valid URL strings.
-
-        :param dict params: A dictionary of parameters.
-        """
-        query = urlparse(self.url).query
-        if query:
-            self.url = self.url.partition('?')[0]
-            existing_params = {
-                p[0]: p[-1]
-                for p in [p.partition('=') for p in query.split('&')]
-            }
-            params.update(existing_params)
-        query_params = ["{}={}".format(k, v) for k, v in params.items()]
-        query = '?' + '&'.join(query_params)
-        self.url = self.url + query
-
-    def add_content(self, data):
-        # type: (Optional[Union[Dict[str, Any], ET.Element]]) -> None
-        """Add a body to the request.
-
-        :param data: Request body data, can be a json serializable
-         object (e.g. dictionary) or a generator (e.g. file data).
-        """
-        if data is None:
-            return
-
-        if isinstance(data, ET.Element):
-            bytes_data = ET.tostring(data, encoding="utf8")
-            self.headers['Content-Length'] = str(len(bytes_data))
-            self.data = bytes_data
-            return
-
-        # By default, assume JSON
-        try:
-            self.data = json.dumps(data)
-            self.headers['Content-Length'] = str(len(self.data))
-        except TypeError:
-            self.data = data
-
-    @staticmethod
-    def _format_data(data):
-        # type: (Union[str, IO]) -> Union[Tuple[None, str], Tuple[Optional[str], IO, str]]
-        """Format field data according to whether it is a stream or
-        a string for a form-data request.
-
-        :param data: The request field data.
-        :type data: str or file-like object.
-        """
-        if hasattr(data, 'read'):
-            data = cast(IO, data)
-            data_name = None
-            try:
-                if data.name[0] != '<' and data.name[-1] != '>':
-                    data_name = os.path.basename(data.name)
-            except (AttributeError, TypeError):
-                pass
-            return (data_name, data, "application/octet-stream")
-        return (None, cast(str, data))
-
-    def add_formdata(self, content=None):
-        # type: (Optional[Dict[str, str]]) -> None
-        """Add data as a multipart form-data request to the request.
-
-        We only deal with file-like objects or strings at this point.
-        The requests is not yet streamed.
-
-        :param dict headers: Any headers to add to the request.
-        :param dict content: Dictionary of the fields of the formdata.
-        """
-        if content is None:
-            content = {}
-        content_type = self.headers.pop('Content-Type', None) if self.headers else None
-
-        if content_type and content_type.lower() == 'application/x-www-form-urlencoded':
-            # Do NOT use "add_content" that assumes input is JSON
-            self.data = {f: d for f, d in content.items() if d is not None}
-        else: # Assume "multipart/form-data"
-            self.files = {f: self._format_data(d) for f, d in content.items() if d is not None}
 
 
 class Request(Generic[HTTPRequestType]):
@@ -354,56 +219,7 @@ class Request(Generic[HTTPRequestType]):
         self.http_request = http_request
         self.context = context
 
-class ClientResponse(object):
-    """Represent a HTTP response.
 
-    No body is defined here on purpose, since async pipeline
-    will provide async ways to access the body
-    Full in-memory using "body" as bytes.
-    """
-    def __init__(self, request, internal_response):
-        # type: (ClientRequest, Any) -> None
-        self.request = request
-        self.internal_response = internal_response
-        self.status_code = None  # type: Optional[int]
-        self.headers = {}  # type: Dict[str, str]
-        self.reason = None  # type: Optional[str]
-
-    def body(self):
-        # type: () -> bytes
-        """Return the whole body as bytes in memory.
-        """
-        pass
-
-    def text(self, encoding=None):
-        # type: (str) -> str
-        """Return the whole body as a string.
-
-        :param str encoding: The encoding to apply. If None, use "utf-8".
-         Implementation can be smarter if they want (using headers).
-        """
-        return self.body().decode(encoding or "utf-8")
-
-    def raise_for_status(self):
-        """Raise for status. Should be overriden, but basic implementation provided.
-        """
-        if self.status_code >= 400:
-            raise ClientRequestError("Received status code {}".format(self.status_code))
-
-
-class StreamableClientResponse(ClientResponse):
-
-    def stream_download(self, chunk_size=None, callback=None):
-        # type: (Optional[int], Optional[Callable]) -> Iterator[bytes]
-        """Generator for streaming request body data.
-
-        Should be implemented by sub-classes if streaming download
-        is supported.
-
-        :param callback: Custom callback for monitoring progress.
-        :param int chunk_size:
-        """
-        pass
 
 
 class Response(Generic[HTTPRequestType, HTTPResponseType]):

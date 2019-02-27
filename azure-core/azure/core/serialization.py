@@ -1,4 +1,4 @@
-﻿# --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 #
 # Copyright (c) Microsoft Corporation. All rights reserved.
 #
@@ -1354,7 +1354,7 @@ class Deserializer(object):
         """
         # This avoids a circular dependency. We might want to consider RawDesializer is more generic
         # than the pipeline concept, and put it in a toolbox, used both here and in pipeline. TBD.
-        from .pipeline.universal_policies import RawDeserializer
+        from .pipeline.universal import RawDeserializer
 
         # Assume this is enough to detect a Pipeline Response without importing it
         context = getattr(raw_data, "context", {})

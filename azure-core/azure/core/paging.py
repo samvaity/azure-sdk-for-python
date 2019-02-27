@@ -33,10 +33,7 @@ except ImportError:
 from typing import Dict, Any, List, Callable, Optional, TYPE_CHECKING  # pylint: disable=unused-import
 
 from .serialization import Deserializer
-
-# TODO: removed because it was for compat, but it's used by Paged.raw
-# do we need a replacement?
-# from .pipeline import ClientRawResponse
+from .pipeline import ClientRawResponse
 
 if TYPE_CHECKING:
     from .universal_http import ClientResponse  # pylint: disable=unused-import
