@@ -47,8 +47,6 @@ except ImportError: # Python <= 3.7
             """Raise any exception triggered within the runtime context."""
             return None
 
-from . import ClientRequest, ClientResponse
-
 
 class AsyncHTTPPolicy(abc.ABC, Generic[HTTPRequestType, AsyncHTTPResponseType]):
     """An http policy ABC.
