@@ -33,7 +33,7 @@ except ImportError:
 from typing import Dict, Any, List, Callable, Optional, TYPE_CHECKING  # pylint: disable=unused-import
 
 from .serialization import Deserializer
-from .pipeline import ClientRawResponse
+#from .pipeline import ClientRawResponse # TODO: not yet copied
 
 if TYPE_CHECKING:
     from .pipeline.transport import _TransportResponse  # pylint: disable=unused-import
@@ -81,17 +81,18 @@ class Paged(AsyncPagedMixin, Iterator):
         """Required for parity to Model object for deserialization."""
         return {}
 
-    @property
-    def raw(self):
-        # type: () -> ClientRawResponse
-        """Get current page as ClientRawResponse.
+    # TODO: haven't copied ClientRawResponse and this isn't used anywhere yet
+    # @property
+    # def raw(self):
+    #     # type: () -> ClientRawResponse
+    #     """Get current page as ClientRawResponse.
 
-        :rtype: ClientRawResponse
-        """
-        raw = ClientRawResponse(self.current_page, self._response)
-        if self._raw_headers:
-            raw.add_headers(self._raw_headers)
-        return raw
+    #     :rtype: ClientRawResponse
+    #     """
+    #     raw = ClientRawResponse(self.current_page, self._response)
+    #     if self._raw_headers:
+    #         raw.add_headers(self._raw_headers)
+    #     return raw
 
     def get(self, url):
         # type: (str) -> List[Model]
