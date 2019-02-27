@@ -44,47 +44,6 @@ except ImportError: # Python <= 3.7
 from . import ClientRequest, ClientResponse
 
 
-class AsyncClientResponse(ClientResponse):
-
-    def stream_download(self, chunk_size: Optional[int] = None, callback: Optional[Callable] = None) -> AsyncIterator[bytes]:
-        """Generator for streaming request body data.
-
-        Should be implemented by sub-classes if streaming download
-        is supported.
-
-        :param callback: Custom callback for monitoring progress.
-        :param int chunk_size:
-        """
-        pass
-
-
-class AsyncHTTPSender(AbstractAsyncContextManager, abc.ABC):
-    """An http sender ABC.
-    """
-
-    @abc.abstractmethod
-    async def send(self, request: ClientRequest, **config: Any) -> AsyncClientResponse:
-        """Send the request using this HTTP sender.
-        """
-        pass
-
-    def build_context(self) -> Any:
-        """Allow the sender to build a context that will be passed
-        across the pipeline with the request.
-
-        Return type has no constraints. Implementation is not
-        required and None by default.
-        """
-        return None
-
-    def __enter__(self):
-        raise TypeError("Use 'async with' instead")
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        # __exit__ should exist in pair with __enter__ but never executed
-        pass  # pragma: no cover
-
-
 class AsyncHTTPPolicy(abc.ABC, Generic[HTTPRequestType, AsyncHTTPResponseType]):
     """An http policy ABC.
     """
@@ -121,33 +80,6 @@ class _SansIOAsyncHTTPPolicyRunner(AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPRes
         return response
 
 
-class AsyncHTTPSender(AbstractAsyncContextManager, abc.ABC, Generic[HTTPRequestType, AsyncHTTPResponseType]):
-    """An http sender ABC.
-    """
-
-    @abc.abstractmethod
-    async def send(self, request: Request[HTTPRequestType], **config: Any) -> Response[HTTPRequestType, AsyncHTTPResponseType]:
-        """Send the request using this HTTP sender.
-        """
-        pass
-
-    def build_context(self) -> Any:
-        """Allow the sender to build a context that will be passed
-        across the pipeline with the request.
-
-        Return type has no constraints. Implementation is not
-        required and None by default.
-        """
-        return None
-
-    def __enter__(self):
-        raise TypeError("Use async with instead")
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        # __exit__ should exist in pair with __enter__ but never executed
-        pass  # pragma: no cover
-
-
 class AsyncPipeline(AbstractAsyncContextManager, Generic[HTTPRequestType, AsyncHTTPResponseType]):
     """A pipeline implementation.
 
@@ -172,7 +104,7 @@ class AsyncPipeline(AbstractAsyncContextManager, Generic[HTTPRequestType, AsyncH
         for index in range(len(self._impl_policies)-1):
             self._impl_policies[index].next = self._impl_policies[index+1]
         if self._impl_policies:
-            self._impl_policies[-1].next = self._sender
+            self._impl_policies[-1].next = self
 
     def __enter__(self):
         raise TypeError("Use 'async with' instead")
@@ -188,17 +120,20 @@ class AsyncPipeline(AbstractAsyncContextManager, Generic[HTTPRequestType, AsyncH
     async def __aexit__(self, *exc_details):  # pylint: disable=arguments-differ
         await self._sender.__aexit__(*exc_details)
 
+    async def send(self, request, **kwargs):
+        return Response(
+            request,
+            await self._sender.send(request.http_request, **kwargs)
+        )
+
     async def run(self, request: Request, **kwargs: Any) -> Response[HTTPRequestType, AsyncHTTPResponseType]:
         context = self._sender.build_context()
         pipeline_request = Request(request, context)
-        first_node = self._impl_policies[0] if self._impl_policies else self._sender
+        first_node = self._impl_policies[0] if self._impl_policies else self
         return await first_node.send(pipeline_request, **kwargs)  # type: ignore
 
 
 __all__ = [
     'AsyncHTTPPolicy',
-    'AsyncHTTPSender',
     'AsyncPipeline',
-    'AsyncHTTPSender',
-    'AsyncClientResponse'
 ]

@@ -33,7 +33,7 @@ from . import AsyncHTTPSender, ClientRequest, AsyncClientResponse
 CONTENT_CHUNK_SIZE = 10 * 1024
 
 
-class _AioHTTPSenderDriver(AsyncHTTPSender):
+class AioHTTPTransport(AsyncHTTPSender):
     """AioHttp HTTP sender implementation.
     """
 
@@ -64,38 +64,7 @@ class _AioHTTPSenderDriver(AsyncHTTPSender):
         return response
 
 
-class AioHTTPSender(AsyncHTTPSender): # TODO: I think this can be deleted.
-    """AioHttp HTTP sender implementation.
-    """
-
-    def __init__(self, driver: Optional[_AioHTTPSenderDriver] = None, *, loop=None) -> None:
-        self.driver = driver or _AioHTTPSenderDriver(loop=loop)
-
-    async def __aenter__(self):
-        await self.driver.__aenter__()
-
-    async def __aexit__(self, *exc_details):  # pylint: disable=arguments-differ
-        await self.driver.__aexit__(*exc_details)
-
-    def build_context(self) -> Any:
-        """Allow the sender to build a context that will be passed
-        across the pipeline with the request.
-
-        Return type has no constraints. Implementation is not
-        required and None by default.
-        """
-        return None
-
-    async def send(self, request: Request, **config: Any) -> Response:
-        """Send the request using this HTTP sender.
-        """
-        return Response(
-            request,
-            await self.driver.send(request.http_request)
-        )
-
-class AioHttpClientResponse(AsyncClientResponse):
-    # TODO: Ask Laurent whether an aiohttp response can be non-streamable.
+class AioHttpTransportResponse(_AsyncTransportResponse):
 
     def __init__(self, request: ClientRequest, aiohttp_response: aiohttp.ClientResponse) -> None:
         super(AioHttpClientResponse, self).__init__(request, aiohttp_response)
