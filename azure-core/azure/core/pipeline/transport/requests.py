@@ -47,7 +47,7 @@ class RequestsContext(object):
 class RequestsTransportResponseBase(_TransportResponseBase):
 
     def __init__(self, request, requests_response):
-        super(RequestsTransportResponse, self).__init__(request, requests_response)
+        super(RequestsTransportResponseBase, self).__init__(request, requests_response)
         self.status_code = requests_response.status_code
         self.headers = requests_response.headers
         self.reason = requests_response.reason
