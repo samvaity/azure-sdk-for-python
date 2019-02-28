@@ -43,7 +43,7 @@ from azure.core.pipeline.transport.async_abc import (
 )
 
 from azure.core.configuration import Configuration
-from azure.core.pipeline.aiohttp import AioHTTPSender
+from azure.core.pipeline.transport.aiohttp import AioHTTPTransport
 from azure.core.pipeline.policies.universal import UserAgentPolicy
 
 import trio
@@ -87,7 +87,7 @@ async def test_basic_aiohttp():
     async with AsyncPipeline(policies) as pipeline:
         response = await pipeline.run(request)
 
-    assert pipeline._sender.driver._session.closed
+    assert pipeline._sender._session.closed
     assert response.http_response.status_code == 200
 
 @pytest.mark.skip("TODO: need AsyncPipelineRequestsHTTPSender")

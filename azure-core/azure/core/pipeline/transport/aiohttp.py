@@ -30,8 +30,6 @@ import aiohttp
 from . import _TransportRequest
 from .async_abc import AsyncHTTPSender, _AsyncTransportResponse
 
-from .. import Request, Response # used by AioHTTPSender
-
 # Matching requests, because why not?
 CONTENT_CHUNK_SIZE = 10 * 1024
 
@@ -61,7 +59,7 @@ class AioHTTPTransport(AsyncHTTPSender):
             request.url,
             **config
         )
-        response = AioHttpClientResponse(request, result)
+        response = AioHttpTransportResponse(request, result)
         if not config.get("stream", False):
             await response.load_body()
         return response
@@ -70,7 +68,7 @@ class AioHTTPTransport(AsyncHTTPSender):
 class AioHttpTransportResponse(_AsyncTransportResponse):
 
     def __init__(self, request: _TransportRequest, aiohttp_response: aiohttp.ClientResponse) -> None:
-        super(AioHttpClientResponse, self).__init__(request, aiohttp_response)
+        super(AioHttpTransportResponse, self).__init__(request, aiohttp_response)
         # https://aiohttp.readthedocs.io/en/stable/client_reference.html#aiohttp.ClientResponse
         self.status_code = aiohttp_response.status
         self.headers = aiohttp_response.headers

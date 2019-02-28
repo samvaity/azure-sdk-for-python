@@ -97,8 +97,8 @@ class AsyncPipeline(AbstractAsyncContextManager, Generic[HTTPRequestType, AsyncH
             self._sender = sender
         else:
             # Import default only if nothing is provided
-            from .aiohttp import AioHTTPSender
-            self._sender = AioHTTPSender()
+            from .transport.aiohttp import AioHTTPTransport
+            self._sender = AioHTTPTransport()
 
         for policy in (policies or []):
             if isinstance(policy, SansIOHTTPPolicy):

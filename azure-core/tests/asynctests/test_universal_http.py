@@ -25,8 +25,8 @@
 #--------------------------------------------------------------------------
 import sys
 
-from azure.core.pipeline.aiohttp import AioHTTPSender
 from azure.core.pipeline.transport import _TransportRequest
+from azure.core.pipeline.transport.aiohttp import AioHTTPTransport
 from azure.core.pipeline.transport.async_abc import AsyncHTTPSender
 
 
@@ -48,7 +48,7 @@ import pytest
 async def test_basic_aiohttp():
 
     request = _TransportRequest("GET", "http://bing.com")
-    async with AioHTTPSender() as sender:
+    async with AioHTTPTransport() as sender:
         response = await sender.send(request)
         assert response.body() is not None
 
