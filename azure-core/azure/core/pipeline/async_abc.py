@@ -124,7 +124,7 @@ class AsyncPipeline(AbstractAsyncContextManager, Generic[HTTPRequestType, AsyncH
     async def __aexit__(self, *exc_details):  # pylint: disable=arguments-differ
         await self._sender.__aexit__(*exc_details)
 
-    async def send(self, request, **kwargs):
+    async def send(self, request: Request, **kwargs):
         return Response(
             request,
             await self._sender.send(request.http_request, **kwargs)
