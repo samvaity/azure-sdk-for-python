@@ -39,9 +39,10 @@ import sys
 
 import pytest
 
-from azure.core.pipeline import Pipeline, SansIOHTTPPolicy, HTTPSender
+from azure.core.pipeline import Pipeline, SansIOHTTPPolicy
 from azure.core.pipeline.transport import (
     _TransportRequest,
+    HTTPSender
     # ClientRawResponse, TODO: not yet copied from msrest
 )
 
