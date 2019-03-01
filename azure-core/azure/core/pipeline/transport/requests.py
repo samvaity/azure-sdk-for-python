@@ -96,11 +96,13 @@ class RequestsTransport(HTTPSender):
     - All kwargs received by "send" are sent to session.request directly
     """
 
+    _protocols = ['http://', 'https://']
+
     def __init__(self, config, session=None):
         # type: (Optional[requests.Session]) -> None
         self._session_mapping = threading.local()
-        self.session = session or requests.Session()
         self.config = config
+        self.session = session or requests.Session()
 
     def __enter__(self):
         # type: () -> RequestsTransport
@@ -122,6 +124,19 @@ class RequestsTransport(HTTPSender):
     def session(self, value):
         self._init_session(value)
         self._session_mapping.session = value
+
+    def _init_session(self, session):
+        # type: (requests.Session) -> None
+        """Init session level configuration of requests.
+
+        This is initialization I want to do once only on a session.
+        """
+        _patch_redirect(session)
+
+        # Change max_retries in current all installed adapters
+        max_retries = self.config.retry_count_total
+        for protocol in self._protocols:
+            session.adapters[protocol].max_retries = max_retries
 
     def build_context(self):
         # type: () -> RequestsContext

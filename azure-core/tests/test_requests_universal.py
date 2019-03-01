@@ -28,15 +28,15 @@ import pytest
 from requests.adapters import HTTPAdapter
 
 from azure.core.pipeline.transport import _TransportRequest
-
+from azure.core.configuration import Configuration
 from azure.core.pipeline.transport.requests import RequestsTransport
 
 
-@pytest.mark.skip("TODO: RequestHTTPSenderConfiguration removed")
+@pytest.mark.skip("TODO: configures requests via RequestsTransport._configure_send")
 def test_session_callback():
 
-    cfg = RequestHTTPSenderConfiguration()
-    with RequestsHTTPSender(cfg) as driver:
+    cfg = Configuration()
+    with RequestsTransport(cfg) as driver:
 
         def callback(session, global_config, local_config, **kwargs):
             assert session is driver.session
@@ -53,14 +53,14 @@ def test_session_callback():
         assert output_kwargs["used_callback"]
 
 
-@pytest.mark.skip("TODO: RequestHTTPSenderConfiguration removed")
+@pytest.mark.skip("TODO: configures requests via RequestsTransport._configure_send")
 def test_max_retries_on_default_adapter():
     # max_retries must be applied only on the default adapters of requests
     # If the user adds its own adapter, don't touch it
-    cfg = RequestHTTPSenderConfiguration()
-    max_retries = cfg.retry_policy()
+    cfg = Configuration()
+    max_retries = cfg.retry_count_total
 
-    with RequestsHTTPSender(cfg) as driver:
+    with RequestsTransport(cfg) as driver:
         request = _TransportRequest("GET", "/")
         driver.session.mount('"http://127.0.0.1/"', HTTPAdapter())
 
@@ -73,10 +73,10 @@ def test_max_retries_on_default_adapter():
         )
 
 
-@pytest.mark.skip("TODO: needs update to configure RequestsTransport")
+@pytest.mark.skip("TODO: Delete this? BasicRequestsHTTPSender isn't thread-safe and so isn't recommended")
 def test_threading_basic_requests():
     # Basic should have the session for all threads, it's why it's not recommended
-    sender = RequestsTransport()
+    sender = BasicRequestsHTTPSender()
     main_thread_session = sender.session
 
     def thread_body(local_sender):
@@ -90,12 +90,11 @@ def test_threading_basic_requests():
         assert future.result()
 
 
-@pytest.mark.skip("TODO: RequestHTTPSenderConfiguration removed")
 def test_threading_cfg_requests():
-    cfg = RequestHTTPSenderConfiguration()
+    cfg = Configuration()
 
     # The one with conf however, should have one session per thread automatically
-    sender = RequestsHTTPSender(cfg)
+    sender = RequestsTransport(cfg)
     main_thread_session = sender.session
 
     # Check that this main session is patched
