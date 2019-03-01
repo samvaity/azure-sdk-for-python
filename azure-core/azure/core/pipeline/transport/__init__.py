@@ -23,7 +23,7 @@
 # IN THE SOFTWARE.
 #
 # --------------------------------------------------------------------------
-
+from __future__ import absolute_import
 import abc
 import json
 import logging
@@ -248,7 +248,9 @@ class _TransportResponseBase(object):
 
 class _TransportResponse(_TransportResponseBase):
 
+
     def stream_download(self, chunk_size=None, callback=None):
+
         # type: (Optional[int], Optional[Callable]) -> Iterator[bytes]
         """Generator for streaming request body data.
 
@@ -259,3 +261,10 @@ class _TransportResponse(_TransportResponseBase):
         :param int chunk_size:
         """
         pass
+
+__all__ = [
+    'HTTPSender',
+    "_TransportRequest",
+    "_TransportResponseBase",
+    '_TransportResponse'
+]
