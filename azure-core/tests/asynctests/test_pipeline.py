@@ -61,7 +61,7 @@ async def test_sans_io_exception():
             """Raise any exception triggered within the runtime context."""
             return None
 
-    pipeline = AsyncPipeline([SansIOHTTPPolicy()], BrokenSender())
+    pipeline = AsyncPipeline(BrokenSender(), [SansIOHTTPPolicy()])
 
     req = _TransportRequest('GET', '/')
     with pytest.raises(ValueError):
@@ -72,7 +72,7 @@ async def test_sans_io_exception():
             exc_type, exc_value, exc_traceback = sys.exc_info()
             raise NotImplementedError(exc_value)
 
-    pipeline = AsyncPipeline([SwapExec()], BrokenSender())
+    pipeline = AsyncPipeline(BrokenSender(), [SwapExec()])
     with pytest.raises(NotImplementedError):
         await pipeline.run(req)
 
@@ -80,14 +80,15 @@ async def test_sans_io_exception():
 @pytest.mark.asyncio
 async def test_basic_aiohttp():
 
+    conf = Configuration()
     request = _TransportRequest("GET", "http://bing.com")
     policies = [
         UserAgentPolicy("myusergant")
     ]
-    async with AsyncPipeline(policies) as pipeline:
+    async with AsyncPipeline(AioHttpTransport(conf), policies) as pipeline:
         response = await pipeline.run(request)
 
-    assert pipeline._sender._session.closed
+    assert pipeline._transport._session.closed
     assert response.http_response.status_code == 200
 
 @pytest.mark.skip("TODO: need AsyncPipelineRequestsHTTPSender")
@@ -98,7 +99,7 @@ async def test_basic_async_requests():
     policies = [
         UserAgentPolicy("myusergant")
     ]
-    async with AsyncPipeline(policies, AsyncPipelineRequestsHTTPSender()) as pipeline:
+    async with AsyncPipeline(AsyncPipelineRequestsHTTPSender(), policies) as pipeline:
         response = await pipeline.run(request)
 
     assert response.http_response.status_code == 200
@@ -112,7 +113,7 @@ async def test_conf_async_requests():
     policies = [
         UserAgentPolicy("myusergant")
     ]
-    async with AsyncPipeline(policies, AsyncPipelineRequestsHTTPSender(AsyncRequestsHTTPSender(conf))) as pipeline:
+    async with AsyncPipeline(AsyncPipelineRequestsHTTPSender(AsyncRequestsHTTPSender(conf)), policies) as pipeline:
         response = await pipeline.run(request)
 
     assert response.http_response.status_code == 200
@@ -126,7 +127,7 @@ def test_conf_async_trio_requests():
         policies = [
             UserAgentPolicy("myusergant")
         ]
-        async with AsyncPipeline(policies, AsyncPipelineRequestsHTTPSender(AsyncTrioRequestsHTTPSender(conf))) as pipeline:
+        async with AsyncPipeline(AsyncPipelineRequestsHTTPSender(AsyncTrioRequestsHTTPSender(conf)), policies) as pipeline:
             return await pipeline.run(request)
 
     response = trio.run(do)

@@ -47,8 +47,9 @@ import pytest
 @pytest.mark.asyncio
 async def test_basic_aiohttp():
 
+    conf = Configuration()
     request = _TransportRequest("GET", "http://bing.com")
-    async with AioHttpTransport() as sender:
+    async with AioHttpTransport(conf) as sender:
         response = await sender.send(request)
         assert response.body() is not None
 

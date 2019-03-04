@@ -59,7 +59,7 @@ def test_sans_io_exception():
             """Raise any exception triggered within the runtime context."""
             return None
 
-    pipeline = Pipeline([SansIOHTTPPolicy()], BrokenSender())
+    pipeline = Pipeline(BrokenSender(), [SansIOHTTPPolicy()])
 
     req = _TransportRequest("GET", "/")
     with pytest.raises(ValueError):
@@ -70,7 +70,7 @@ def test_sans_io_exception():
             exc_type, exc_value, exc_traceback = sys.exc_info()
             raise NotImplementedError(exc_value)
 
-    pipeline = Pipeline([SwapExec()], BrokenSender())
+    pipeline = Pipeline(BrokenSender(), [SwapExec()])
     with pytest.raises(NotImplementedError):
         pipeline.run(req)
 
