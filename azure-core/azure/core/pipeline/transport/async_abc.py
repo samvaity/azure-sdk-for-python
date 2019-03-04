@@ -26,7 +26,8 @@
 
 import abc
 from . import _TransportResponseBase
-from .. import Request, Response, Pipeline, SansIOHTTPPolicy
+from .. import Request, Response, Pipeline
+from ..policies.base import SansIOHTTPPolicy
 from typing import Any, List, Union, Callable, AsyncIterator, Optional, Generic, TypeVar
 
 try:

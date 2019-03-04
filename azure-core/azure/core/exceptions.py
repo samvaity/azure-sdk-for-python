@@ -74,11 +74,6 @@ class DeserializationError(ClientException):
     pass
 
 
-class TokenExpiredError(ClientException):
-    """OAuth token expired, request failed."""
-    pass
-
-
 class ValidationError(ClientException):
     """Request parameter validation failed."""
 
@@ -114,8 +109,26 @@ class ClientRequestError(ClientException):
     pass
 
 
+class ConnectionError(ClientException):
+    pass
+
+
+class ConnectionReadError(ClientException):
+    pass
+
+
 class AuthenticationError(ClientException):
     """Client request failed to authenticate."""
+    pass
+
+
+class TokenExpiredError(AuthenticationError):
+    """OAuth token expired, request failed."""
+    pass
+
+
+class TokenInvalidError(AuthenticationError):
+    """OAuth token invalid, request failed."""
     pass
 
 

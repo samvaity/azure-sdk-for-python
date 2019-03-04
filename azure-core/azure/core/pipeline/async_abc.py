@@ -29,7 +29,8 @@ import abc
 from typing import Any, List, Union, Callable, AsyncIterator, Optional, Generic, TypeVar
 
 from azure.core.pipeline.transport.async_abc import AsyncHTTPSender
-from . import Request, Response, Pipeline, SansIOHTTPPolicy
+from . import Request, Response, Pipeline
+from .policies.base import SansIOHTTPPolicy
 
 AsyncHTTPResponseType = TypeVar("AsyncHTTPResponseType")
 HTTPRequestType = TypeVar("HTTPRequestType")
@@ -84,6 +85,19 @@ class _SansIOAsyncHTTPPolicyRunner(AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPRes
         return response
 
 
+class _AsyncTransportRunner(AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPResponseType]):
+
+    def __init__(self, sender: AsyncHTTPSender[HTTPRequestType, AsyncHTTPResponseType]) -> None:
+        super(_AsyncTransportRunner, self).__init__()
+        self._sender = sender
+
+    async def send(self, request, **kwargs):
+        return Response(
+            request,
+            await self._sender.send(request.http_request, **kwargs)
+        )
+
+
 class AsyncPipeline(AbstractAsyncContextManager, Generic[HTTPRequestType, AsyncHTTPResponseType]):
     """A pipeline implementation.
 
@@ -91,14 +105,9 @@ class AsyncPipeline(AbstractAsyncContextManager, Generic[HTTPRequestType, AsyncH
     of the HTTP sender.
     """
 
-    def __init__(self, policies: List[Union[AsyncHTTPPolicy, SansIOHTTPPolicy]] = None, sender: Optional[AsyncHTTPSender[HTTPRequestType, AsyncHTTPResponseType]] = None) -> None:
+    def __init__(self, sender: AsyncHTTPSender[HTTPRequestType, AsyncHTTPResponseType], policies: List[Union[AsyncHTTPPolicy, SansIOHTTPPolicy]] = None) -> None:
         self._impl_policies = []  # type: List[AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPResponseType]]
-        if sender:
-            self._sender = sender
-        else:
-            # Import default only if nothing is provided
-            from .transport.aiohttp import AioHTTPTransport
-            self._sender = AioHTTPTransport()
+        self._transport = sender
 
         for policy in (policies or []):
             if isinstance(policy, SansIOHTTPPolicy):
@@ -108,7 +117,7 @@ class AsyncPipeline(AbstractAsyncContextManager, Generic[HTTPRequestType, AsyncH
         for index in range(len(self._impl_policies)-1):
             self._impl_policies[index].next = self._impl_policies[index+1]
         if self._impl_policies:
-            self._impl_policies[-1].next = self
+            self._impl_policies[-1].next = _AsyncTransportRunner(self._transport)
 
     def __enter__(self):
         raise TypeError("Use 'async with' instead")
@@ -118,11 +127,11 @@ class AsyncPipeline(AbstractAsyncContextManager, Generic[HTTPRequestType, AsyncH
         pass  # pragma: no cover
 
     async def __aenter__(self) -> 'AsyncPipeline':
-        await self._sender.__aenter__()
+        await self._transport.__aenter__()
         return self
 
     async def __aexit__(self, *exc_details):  # pylint: disable=arguments-differ
-        await self._sender.__aexit__(*exc_details)
+        await self._transport.__aexit__(*exc_details)
 
     async def send(self, request: Request, **kwargs):
         return Response(
@@ -131,9 +140,9 @@ class AsyncPipeline(AbstractAsyncContextManager, Generic[HTTPRequestType, AsyncH
         )
 
     async def run(self, request: Request, **kwargs: Any) -> Response[HTTPRequestType, AsyncHTTPResponseType]:
-        context = self._sender.build_context()
+        context = self._transport.build_context()
         pipeline_request = Request(request, context)
-        first_node = self._impl_policies[0] if self._impl_policies else self
+        first_node = self._impl_policies[0] if self._impl_policies else _AsyncTransportRunner(self._transport)
         return await first_node.send(pipeline_request, **kwargs)  # type: ignore
 
 

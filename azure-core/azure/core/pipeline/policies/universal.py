@@ -24,23 +24,39 @@
 #
 # --------------------------------------------------------------------------
 """
-This module represents universal policy that works whatever the HTTPSender implementation
+This module is the requests implementation of Pipeline ABC
 """
+from __future__ import absolute_import  # we have a "requests" module that conflicts with "requests" on Py2.7
+import contextlib
 import json
 import logging
 import os
-import xml.etree.ElementTree as ET
 import platform
+import threading
+from typing import TYPE_CHECKING, cast, List, Callable, Iterator, Any, Union, Dict, Optional  # pylint: disable=unused-import
+import xml.etree.ElementTree as ET
+import warnings
 
-from typing import Mapping, Any, Optional, AnyStr, Union, IO, cast, TYPE_CHECKING  # pylint: disable=unused-import
+from oauthlib import oauth2
+import requests
+from requests.models import CONTENT_CHUNK_SIZE
 
 from azure.core import __version__  as azcore_version
-from .. import SansIOHTTPPolicy
-from ...exceptions import DeserializationError, raise_with_traceback
+from .base import HTTPPolicy, SansIOHTTPPolicy
 from ...http_logger import log_request, log_response
+from urllib3 import Retry  # Needs requests 2.16 at least to be safe
 
-if TYPE_CHECKING:
-    from .. import Request, Response  # pylint: disable=unused-import
+from azure.core.exceptions import (
+    DeserializationError,
+    TokenExpiredError,
+    TokenInvalidError,
+    AuthenticationError,
+    ClientRequestError,
+    raise_with_traceback
+)
+from .. import Request, Response
+from ..transport import _TransportRequest, HTTPSender
+from ..transport.requests import RequestsTransport
 
 
 _LOGGER = logging.getLogger(__name__)

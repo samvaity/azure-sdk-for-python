@@ -28,12 +28,19 @@ import contextlib
 import requests
 import threading
 
-from azure.core.exceptions import raise_with_traceback
-
+from oauthlib import oauth2
 from . import (
     _TransportResponse,
     _TransportResponseBase,
     HTTPSender
+)
+
+from ...exceptions import (
+    ClientRequestError,
+    TokenExpiredError,
+    TokenInvalidError,
+    AuthenticationError,
+    raise_with_traceback
 )
 
 # Matching requests, because why not?
@@ -98,10 +105,10 @@ class RequestsTransport(HTTPSender):
 
     _protocols = ['http://', 'https://']
 
-    def __init__(self, config, session=None):
+    def __init__(self, configuration, session=None):
         # type: (Optional[requests.Session]) -> None
         self._session_mapping = threading.local()
-        self.config = config
+        self.config = configuration
         self.session = session or requests.Session()
 
     def __enter__(self):
@@ -110,6 +117,14 @@ class RequestsTransport(HTTPSender):
 
     def __exit__(self, *exc_details):  # pylint: disable=arguments-differ
         self.close()
+
+    def _init_session(self, session):
+        # type: (requests.Session) -> None
+        """Init session level configuration of requests.
+
+        This is initialization I want to do once only on a session.
+        """
+        pass  # TODO: Apply configuration
 
     @property  # type: ignore
     def session(self):
@@ -124,19 +139,6 @@ class RequestsTransport(HTTPSender):
     def session(self, value):
         self._init_session(value)
         self._session_mapping.session = value
-
-    def _init_session(self, session):
-        # type: (requests.Session) -> None
-        """Init session level configuration of requests.
-
-        This is initialization I want to do once only on a session.
-        """
-        _patch_redirect(session)
-
-        # Change max_retries in current all installed adapters
-        max_retries = self.config.retry_count_total
-        for protocol in self._protocols:
-            session.adapters[protocol].max_retries = max_retries
 
     def build_context(self):
         # type: () -> RequestsContext
@@ -162,36 +164,17 @@ class RequestsTransport(HTTPSender):
                 request.method,
                 request.url,
                 **kwargs)
+        except oauth2.rfc6749.errors.InvalidGrantError as err:
+            msg = "Token is invalid."
+            raise_with_traceback(TokenInvalidError, msg, err)
+        except oauth2.rfc6749.errors.TokenExpiredError as err:
+            msg = "Token has expired."
+            raise_with_traceback(TokenExpiredError, msg, err)
+        except oauth2.rfc6749.errors.OAuth2Error as err:
+            msg = "Authentication error occurred in request."
+            raise_with_traceback(AuthenticationError, msg, err)
         except requests.RequestException as err:
             msg = "Error occurred in request."
             raise_with_traceback(ClientRequestError, msg, err)
 
         return RequestsTransportResponse(request, response)
-
-
-def _patch_redirect(session):
-    # type: (requests.Session) -> None
-    """Whether redirect policy should be applied based on status code.
-
-    HTTP spec says that on 301/302 not HEAD/GET, should NOT redirect.
-    But requests does, to follow browser more than spec
-    https://github.com/requests/requests/blob/f6e13ccfc4b50dc458ee374e5dba347205b9a2da/requests/sessions.py#L305-L314
-
-    This patches "requests" to be more HTTP compliant.
-
-    Note that this is super dangerous, since technically this is not public API.
-    """
-    def enforce_http_spec(resp, request):
-        if resp.status_code in (301, 302) and \
-                request.method not in ['GET', 'HEAD']:
-            return False
-        return True
-
-    redirect_logic = session.resolve_redirects
-
-    def wrapped_redirect(resp, req, **kwargs):
-        attempt = enforce_http_spec(resp, req)
-        return redirect_logic(resp, req, **kwargs) if attempt else []
-    wrapped_redirect.is_msrest_patched = True  # type: ignore
-
-    session.resolve_redirects = wrapped_redirect  # type: ignore

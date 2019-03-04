@@ -39,7 +39,8 @@ import sys
 
 import pytest
 
-from azure.core.pipeline import Pipeline, SansIOHTTPPolicy
+from azure.core.pipeline import Pipeline
+from azure.core.pipeline.policies.base import SansIOHTTPPolicy
 from azure.core.pipeline.transport import (
     _TransportRequest,
     HTTPSender

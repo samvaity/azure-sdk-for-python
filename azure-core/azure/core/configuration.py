@@ -55,8 +55,6 @@ class Configuration(object):
         self.connection_cert = kwargs.pop('connection_cert', None)
         self.connection_data_block_size = kwargs.pop('connection_data_block_size', 4096)
         self.connection_keep_alive = kwargs.pop('connection_keep_alive', False)
-        # self.connection_cookies  # TODO: Ask Laurent how this is used/configured
-        # self.connection_hooks  # TODO: Should this be exposed here? Or a pipeline policy?
 
         # Headers (sent with every requests)
         self.headers = kwargs.pop('headers', {})  # type: Dict[str, str]

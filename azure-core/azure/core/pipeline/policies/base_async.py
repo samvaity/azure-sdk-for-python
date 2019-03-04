@@ -1,3 +1,4 @@
+
 # --------------------------------------------------------------------------
 #
 # Copyright (c) Microsoft Corporation. All rights reserved.
@@ -23,8 +24,37 @@
 # IN THE SOFTWARE.
 #
 # --------------------------------------------------------------------------
-from typing import Any, Callable, AsyncIterator, Optional
+import abc
 
-import aiohttp
+from typing import Any, List, Union, Callable, AsyncIterator, Optional
 
-# TODO Retry policy? Credentials policy?
+try:
+    from contextlib import AbstractAsyncContextManager  # type: ignore
+except ImportError: # Python <= 3.7
+    class AbstractAsyncContextManager(object):  # type: ignore
+        async def __aenter__(self):
+            """Return `self` upon entering the runtime context."""
+            return self
+
+        @abc.abstractmethod
+        async def __aexit__(self, exc_type, exc_value, traceback):
+            """Raise any exception triggered within the runtime context."""
+            return None
+
+from . import ClientRequest, ClientResponse
+
+
+class AsyncHTTPPolicy(abc.ABC, Generic[HTTPRequestType, AsyncHTTPResponseType]):
+    """An http policy ABC.
+    """
+    def __init__(self) -> None:
+        # next will be set once in the pipeline
+        self.next = None  # type: Optional[Union[AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPResponseType], AsyncHTTPSender[HTTPRequestType, AsyncHTTPResponseType]]]
+
+    @abc.abstractmethod
+    async def send(self, request: Request, **kwargs: Any) -> Response[HTTPRequestType, AsyncHTTPResponseType]:
+        """Mutate the request.
+
+        Context content is dependent of the HTTPSender.
+        """
+        pass

@@ -43,7 +43,7 @@ from azure.core.pipeline.transport.async_abc import (
 )
 
 from azure.core.configuration import Configuration
-from azure.core.pipeline.transport.aiohttp import AioHTTPTransport
+from azure.core.pipeline.transport.aiohttp import AioHttpTransport
 from azure.core.pipeline.policies.universal import UserAgentPolicy
 
 import trio
