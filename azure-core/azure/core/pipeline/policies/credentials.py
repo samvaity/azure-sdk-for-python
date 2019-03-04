@@ -41,6 +41,8 @@ from urllib3 import Retry  # Needs requests 2.16 at least to be safe
 
 from ..exceptions import (
     TokenExpiredError,
+    TokenInvalidError,
+    AuthenticationError,
     ClientRequestError,
     raise_with_traceback
 )
@@ -52,48 +54,30 @@ from . import HTTPSender, HTTPPolicy, Response, Request
 _LOGGER = logging.getLogger(__name__)
 
 
-class RequestsCredentialsPolicy(HTTPPolicy):
-    # TODO: Does it rely on deprecated auth constructs?
+class CredentialsPolicy(HTTPPolicy):
     """Implementation of request-oauthlib except and retry logic.
     """
     def __init__(self, credentials):
-        super(RequestsCredentialsPolicy, self).__init__()
-        self._creds = credentials
+        super(CredentialsPolicy, self).__init__()
+        self._credentials = credentials
 
     def send(self, request, **kwargs):
         session = request.context.session
         try:
-            self._creds.signed_session(session)
+            self._credentials.signed_session(session)
         except TypeError: # Credentials does not support session injection
-            _LOGGER.warning("Your credentials class does not support session injection. Performance will not be at the maximum.")
-            request.context.session = session = self._creds.signed_session()
+            _LOGGER.warning("Your credentials class does not support session injection. Performance will not be optimal.")
+            request.context.session = session = self._credentials.signed_session()
 
         try:
-            try:
-                return self.next.send(request, **kwargs)
-            except (oauth2.rfc6749.errors.InvalidGrantError,
-                    oauth2.rfc6749.errors.TokenExpiredError) as err:
-                error = "Token expired or is invalid. Attempting to refresh."
-                _LOGGER.warning(error)
+            return self.next.send(request, **kwargs)
+        except (TokenExpiredError, TokenInvalidError) as err:
+            _LOGGER.warning("Token expired or is invalid. Attempting to refresh.")
 
-            try:
-                try:
-                    self._creds.refresh_session(session)
-                except TypeError: # Credentials does not support session injection
-                    _LOGGER.warning("Your credentials class does not support session injection. Performance will not be at the maximum.")
-                    request.context.session = session = self._creds.refresh_session()
+        try:
+            self._credentials.refresh_session(session)
+        except TypeError: # Credentials does not support session injection
+            _LOGGER.warning("Your credentials class does not support session injection. Performance will not be optimal.")
+            request.context.session = session = self._credentials.refresh_session()
 
-                return self.next.send(request, **kwargs)
-            except (oauth2.rfc6749.errors.InvalidGrantError,
-                    oauth2.rfc6749.errors.TokenExpiredError) as err:
-                msg = "Token expired or is invalid."
-                raise_with_traceback(TokenExpiredError, msg, err)
-
-        except (requests.RequestException,
-                oauth2.rfc6749.errors.OAuth2Error) as err:
-            msg = "Error occurred in request."
-            raise_with_traceback(ClientRequestError, msg, err)
-
-
-class RequestsRetryPolicy(HTTPPolicy):
-    pass  # TODO
+        return self.next.send(request, **kwargs)

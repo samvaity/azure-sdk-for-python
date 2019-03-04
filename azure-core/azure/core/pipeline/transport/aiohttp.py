@@ -33,12 +33,19 @@ from . import AsyncHTTPSender, ClientRequest, AsyncClientResponse
 CONTENT_CHUNK_SIZE = 10 * 1024
 
 
-class AioHTTPTransport(AsyncHTTPSender):
+class AioHttpContext(object):
+    def __init__(self, session):
+        self.session = session
+
+
+class AioHttpTransport(AsyncHTTPSender):
     """AioHttp HTTP sender implementation.
     """
 
-    def __init__(self, *, loop=None):
+    def __init__(self, configuration, *, loop=None):
         self._session = aiohttp.ClientSession(loop=loop)
+        self.config = configuration
+        self._init_session(self._session)
 
     async def __aenter__(self):
         await self._session.__aenter__()
@@ -46,6 +53,15 @@ class AioHTTPTransport(AsyncHTTPSender):
 
     async def __aexit__(self, *exc_details):  # pylint: disable=arguments-differ
         await self._session.__aexit__(*exc_details)
+
+    def _init_session(self, session):
+        pass  # configure sesison
+
+    def build_context(self):
+        # type: () -> RequestsContext
+        return AioHttpContext(
+            session=self._session,
+        )
 
     async def send(self, request: ClientRequest, **config: Any) -> AsyncClientResponse:
         """Send the request using this HTTP sender.
@@ -58,7 +74,7 @@ class AioHTTPTransport(AsyncHTTPSender):
             request.url,
             **config
         )
-        response = AioHttpClientResponse(request, result)
+        response = AioHttpTransportResponse(request, result)
         if not config.get("stream", False):
             await response.load_body()
         return response
