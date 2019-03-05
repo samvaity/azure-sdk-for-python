@@ -54,6 +54,23 @@ from . import HTTPSender, HTTPPolicy, Response, Request
 _LOGGER = logging.getLogger(__name__)
 
 
+class RetryHistory(object):
+    """A pipeline response object.
+
+    The Response interface exposes an HTTP response object as it returns through the pipeline of Policy objects.
+    This ensures that Policy objects have access to the HTTP response.
+
+    This also have a "context" dictionnary where policy can put additional fields.
+    Policy SHOULD update the "context" dictionary with additional post-processed field if they create them.
+    However, nothing prevents a policy to actually sub-class this class a return it instead of the initial instance.
+    """
+    def __init__(self, http_request, http_response=None, error=None, context=None):
+        # type: (Request[HTTPRequestType], Exception, Optional[Dict[str, Any]]) -> None
+        self.http_request = http_request
+        self.http_response = http_response
+        self.error = error
+
+
 class RetryPolicy(HTTPPolicy):
     """Implementation of request-oauthlib except and retry logic.
     """
@@ -68,7 +85,7 @@ class RetryPolicy(HTTPPolicy):
     def __init__(self, total=10, connect=None, read=None, rstatus=None,
                  method_whitelist=DEFAULT_METHOD_WHITELIST, status_forcelist=None,
                  backoff_factor=0, raise_on_status=True, respect_retry_after_header=True):
-
+        self.history = tuple()
         self.total = total
         self.connect = connect
         self.read = read
@@ -81,13 +98,13 @@ class RetryPolicy(HTTPPolicy):
         self.history = history or tuple()
         self.respect_retry_after_header = respect_retry_after_header
 
-    def get_backoff_time(self, response):
+    def get_backoff_time(self):
         """ Formula for computing the current backoff
 
         :rtype: float
         """
         # We want to consider only the last consecutive errors sequence (Ignore redirects).
-        consecutive_errors_len = len(response.history)
+        consecutive_errors_len = len(self.history)
         if consecutive_errors_len <= 1:
             return 0
 
@@ -128,8 +145,8 @@ class RetryPolicy(HTTPPolicy):
 
         return False
 
-    def _sleep_backoff(self, response):
-        backoff = self.get_backoff_time(response)
+    def _sleep_backoff(self):
+        backoff = self.get_backoff_time()
         if backoff <= 0:
             return
         time.sleep(backoff)
@@ -148,7 +165,7 @@ class RetryPolicy(HTTPPolicy):
             if slept:
                 return
 
-        self._sleep_backoff(response)
+        self._sleep_backoff()
 
     def _is_connection_error(self, err):
         """ Errors when we're fairly sure that the server did not receive the
@@ -196,8 +213,7 @@ class RetryPolicy(HTTPPolicy):
 
         return min(retry_counts) < 0
 
-    def increment(self, method=None, url=None, response=None, error=None,
-                  _pool=None, _stacktrace=None):
+    def increment(self, response=None, error=None):
         """ Return a new Retry object with incremented retry counters.
 
         :param response: A response object, or None, if the server did not
@@ -210,60 +226,53 @@ class RetryPolicy(HTTPPolicy):
         """
         if self.total is False and error:
             # Disabled, indicate to re-raise the error.
-            raise six.reraise(type(error), error, _stacktrace)
+            raise_with_traceback(error)
 
-        total = self.total
-        if total is not None:
-            total -= 1
-
-        connect = self.connect
-        read = self.read
-        status_count = self.status
-        cause = 'unknown'
-        status = None
-        redirect_location = None
+        if self.total is not None:
+            self.total -= 1
 
         if error and self._is_connection_error(error):
             # Connect retry?
-            if connect is False:
-                raise six.reraise(type(error), error, _stacktrace)
-            elif connect is not None:
-                connect -= 1
+            if self.connect is False:
+                raise_with_traceback(error)
+            elif self.connect is not None:
+                self.connect -= 1
+            self.history.append(RetryHistory(response.http_request, error=error))
 
         elif error and self._is_read_error(error):
             # Read retry?
-            if read is False or not self._is_method_retryable(method):
-                raise six.reraise(type(error), error, _stacktrace)
-            elif read is not None:
-                read -= 1
+            if self.read is False or not self._is_method_retryable(method):
+                raise_with_traceback(error)
+            elif self.read is not None:
+                self.read -= 1
+            self.history.append(RetryHistory(response.http_request, error=error))
 
         else:
             # Incrementing because of a server error like a 500 in
             # status_forcelist and a the given method is in the whitelist
-            cause = ResponseError.GENERIC_ERROR
-            if response and response.status:
-                if status_count is not None:
-                    status_count -= 1
-                cause = ResponseError.SPECIFIC_ERROR.format(
-                    status_code=response.status)
-                status = response.status
+            if response:
+                if self.status_count is not None:
+                    self.status_count -= 1
+            self.history.append(RetryHistory(response.http_request, http_response=response.http_response))
 
-        history = self.history + (RequestHistory(method, url, error, status),)
-
-
-        if new_retry.is_exhausted():
-            raise MaxRetryError(_pool, url, error or ResponseError(cause))
-
-        log.debug("Incremented Retry for (url='%s'): %r", url, new_retry)
-
-        return new_retry
+        return not self.is_exhausted()
 
     def send(self, request, **kwargs):
         retryable = True
         while retryable:
             try:
-                return self.next.send(request, **kwargs)
+                response = self.next.send(request, **kwargs)
+                if self.is_retry(response):
+                    retryable = self.increment(response=response)
+                    continue
+                response.history = self.history
+                return response
             except AuthenticationError:
                 raise
             except ClientRequestError as err:
-                
+                if retryable:
+                    retryable = self.increment(error=err)
+                    continue
+                raise
+
+        raise MaxRetryError(retry_history=self.history)

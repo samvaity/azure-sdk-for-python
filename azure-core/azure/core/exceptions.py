@@ -109,11 +109,23 @@ class ClientRequestError(ClientException):
     pass
 
 
+class MaxRetryError(ClientException):
+
+    def __init__(self, history, *args, **kwargs):
+        self.history = history
+        message = "Reached maximum retry attempts."
+        super(MaxRetryError, self).__init__(message, *args, **kwargs)
+
+
+class MaxRedirectError(ClientException):
+
+    def __init__(self, history, *args, **kwargs):
+        self.history = history
+        message = "Reached maximum redirect attempts."
+        super(MaxRetryError, self).__init__(message, *args, **kwargs)
+
+
 class ConnectionError(ClientException):
-    pass
-
-
-class ConnectionReadError(ClientException):
     pass
 
 
@@ -130,79 +142,3 @@ class TokenExpiredError(AuthenticationError):
 class TokenInvalidError(AuthenticationError):
     """OAuth token invalid, request failed."""
     pass
-
-
-# Needed only here for type checking
-if TYPE_CHECKING:
-    import requests
-    from .serialization import Deserializer
-
-class HttpOperationError(ClientException):
-    """Client request failed due to server-specified HTTP operation error.
-    Attempts to deserialize response into specific error object.
-
-    :param Deserializer deserialize: Deserializer with data on custom
-     error objects.
-    :param requests.Response response: Server response
-    :param str resp_type: Objects type to deserialize response.
-    :param args: Additional args to pass to exception object.
-    """
-    _DEFAULT_MESSAGE = "Unknown error"
-
-    def __str__(self):
-        # type: () -> str
-        return str(self.message)
-
-    def __init__(self, deserialize, response,
-                 resp_type=None, *args, **kwargs):
-        # type: (Deserializer, Any, Optional[str], str, str) -> None
-        self.error = None
-        self.message = self._DEFAULT_MESSAGE
-        if hasattr(response, 'internal_response'):
-            self.response = response.internal_response
-        else:
-            self.response = response
-        try:
-            if resp_type:
-                self.error = deserialize(resp_type, response)
-                if self.error is None:
-                    self.error = deserialize.dependencies[resp_type]()
-                # ARM uses OData v4, try that by default
-                # http://docs.oasis-open.org/odata/odata-json-format/v4.0/os/odata-json-format-v4.0-os.html#_Toc372793091
-                # Code and Message are REQUIRED
-                try:
-                    self.message = "({}) {}".format(
-                        self.error.error.code,
-                        self.error.error.message
-                    )
-                except AttributeError:
-                    # Try the default for Autorest if not available (compat)
-                    if self.error.message:
-                        self.message = self.error.message
-        except (DeserializationError, AttributeError, KeyError):
-            pass
-
-        if not self.error or self.message == self._DEFAULT_MESSAGE:
-            try:
-                response.raise_for_status()
-            # Two possible raises here:
-            # - Attribute error if response is not ClientResponse. Do not catch.
-            # - Any internal exception, take it.
-            except AttributeError:
-                raise
-            except Exception as err:  # pylint: disable=broad-except
-                if not self.error:
-                    self.error = err
-
-                if self.message == self._DEFAULT_MESSAGE:
-                    msg = "Operation returned an invalid status code {!r}"
-                    self.message = msg.format(response.reason)
-            else:
-                if not self.error:
-                    self.error = response
-
-        # We can't type hint, but at least we can check that
-        assert self.message is not None
-
-        super(HttpOperationError, self).__init__(
-            self.message, self.error, *args, **kwargs)

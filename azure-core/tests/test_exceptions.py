@@ -34,7 +34,6 @@ except ImportError:
 import requests
 
 from azure.core.serialization import Model, Deserializer
-from azure.core.exceptions import HttpOperationError
 
 
 class TestExceptions(unittest.TestCase):
@@ -51,55 +50,3 @@ class TestExceptions(unittest.TestCase):
 
         self.assertIn("TESTING", str(excep))
         self.assertIn("Operation returned an invalid status code", str(excep))
-
-    def test_custom_exception(self):
-        class ErrorResponse(Model):
-            _attribute_map = {"error": {"key": "error", "type": "ErrorDetails"}}
-
-            def __init__(self, error=None):
-                self.error = error
-
-        class ErrorResponseException(HttpOperationError):
-            def __init__(self, deserialize, response, *args):
-                super(ErrorResponseException, self).__init__(
-                    deserialize, response, "ErrorResponse", *args
-                )
-
-        class ErrorDetails(Model):
-            _validation = {
-                "code": {"readonly": True},
-                "message": {"readonly": True},
-                "target": {"readonly": True},
-            }
-
-            _attribute_map = {
-                "code": {"key": "code", "type": "str"},
-                "message": {"key": "message", "type": "str"},
-                "target": {"key": "target", "type": "str"},
-            }
-
-            def __init__(self):
-                self.code = None
-                self.message = None
-                self.target = None
-
-        deserializer = Deserializer(
-            {"ErrorResponse": ErrorResponse, "ErrorDetails": ErrorDetails}
-        )
-
-        response = requests.Response()
-        response._content_consumed = True
-        response._content = json.dumps(
-            {
-                "error": {
-                    "code": "NotOptedIn",
-                    "message": "You are not allowed to download invoices. Please contact your account administrator to turn on access in the management portal for allowing to download invoices through the API.",
-                }
-            }
-        ).encode("utf-8")
-        response.headers = {"content-type": "application/json; charset=utf8"}
-
-        excep = ErrorResponseException(deserializer, response)
-
-        self.assertIn("NotOptedIn", str(excep))
-        self.assertIn("You are not allowed to download invoices", str(excep))

@@ -67,7 +67,7 @@ class Configuration(object):
         self.redirect_allow = kwargs.pop('redirect_allow', True)
         self.redirect_max = kwargs.pop('redirect_max', 30)
 
-        # Retry configuration  # TODO: Revisit whether this is a policy or transport configuration
+        # Retry configuration
         safe_codes = [i for i in range(500) if i != 408] + [501, 505]
         self.retry_status_codes = kwargs.pop('retry_status_codes', [i for i in range(999) if i not in safe_codes])
         self.retry_count_total = kwargs.pop('retry_count_total', 3)

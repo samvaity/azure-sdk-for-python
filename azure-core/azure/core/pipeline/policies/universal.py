@@ -81,7 +81,7 @@ class UserAgentPolicy(SansIOHTTPPolicy):
     _USERAGENT = "User-Agent"
     _ENV_ADDITIONAL_USER_AGENT = 'AZURE_HTTP_USER_AGENT'
 
-    def __init__(self, user_agent=None, overwrite=False):  # TODO: Ask Laurent about overwrite.
+    def __init__(self, user_agent=None, overwrite=False):  # TODO: Confirm overwrite behaviour
         # type: (Optional[str], bool) -> None
         self._overwrite = overwrite
         if user_agent is None:
