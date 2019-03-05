@@ -25,27 +25,16 @@
 #--------------------------------------------------------------------------
 import sys
 
-from azure.core.pipeline.transport import (
-    TransportRequest,
-)
-
-# TODO: copy these?
-# from msrest.universal_http.async_requests import (
-#     AsyncRequestsHTTPSender,
-#     AsyncTrioRequestsHTTPSender,
-# )
-# from msrest.pipeline.async_requests import AsyncPipelineRequestsHTTPSender
-
-from azure.core.pipeline.async_abc import AsyncPipeline
-from azure.core.pipeline.transport.async_abc import (
-    AsyncHTTPSender,
-    SansIOHTTPPolicy
-)
-
 from azure.core.configuration import Configuration
-from azure.core.pipeline.transport.aiohttp import AioHttpTransport
-from azure.core.pipeline.transport.async_requests import AsyncioRequestsTransport, TrioRequestsTransport
-from azure.core.pipeline.policies.universal import UserAgentPolicy
+from azure.core.pipeline import AsyncPipeline
+from azure.core.pipeline.policies import SansIOHTTPPolicy, UserAgentPolicy
+from azure.core.pipeline.transport import (
+    AsyncHTTPSender,
+    TransportRequest,
+    AsyncioRequestsTransport,
+    TrioRequestsTransport,
+    AioHttpTransport
+)
 
 import trio
 

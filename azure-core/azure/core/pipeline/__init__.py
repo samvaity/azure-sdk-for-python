@@ -26,21 +26,6 @@
 
 import abc
 
-from .base import Pipeline, Request, Response
-
-__all__ = [
-    'Pipeline',
-    'Request',
-    'Response'
-]
-
-try:
-    from .base_async import AsyncPipeline, AbstractAsyncContextManager
-    __all__.append('AsyncPipeline')
-except (SyntaxError, ImportError):
-    pass  # Asynchronous pipelines not supported.
-
-
 try:
     ABC = abc.ABC
 except AttributeError: # Python 2.7, abc exists, but not ABC
@@ -58,3 +43,60 @@ except ImportError: # Python <= 3.5
         def __exit__(self, exc_type, exc_value, traceback):
             """Raise any exception triggered within the runtime context."""
             return None
+
+
+class Request(object):
+    """Represents a HTTP request in a Pipeline.
+
+    URL can be given without query parameters, to be added later using "format_parameters".
+
+    Instance can be created without data, to be added later using "add_content"
+
+    Instance can be created without files, to be added later using "add_formdata"
+
+    :param str method: HTTP method (GET, HEAD, etc.)
+    :param str url: At least complete scheme/host/path
+    :param dict[str,str] headers: HTTP headers
+    :param files: Files list.
+    :param data: Body to be sent.
+    :type data: bytes or str.
+    """
+    def __init__(self, http_request, context=None):
+        # type: (HTTPRequestType, Optional[Any]) -> None
+        self.http_request = http_request
+        self.context = context
+
+
+class Response(object):
+    """A pipeline response object.
+
+    The Response interface exposes an HTTP response object as it returns through the pipeline of Policy objects.
+    This ensures that Policy objects have access to the HTTP response.
+
+    This also have a "context" dictionnary where policy can put additional fields.
+    Policy SHOULD update the "context" dictionary with additional post-processed field if they create them.
+    However, nothing prevents a policy to actually sub-class this class a return it instead of the initial instance.
+    """
+    def __init__(self, http_request, http_response, context=None):
+        # type: (Request[HTTPRequestType], HTTPResponseType, Optional[Dict[str, Any]]) -> None
+        self.http_request = http_request
+        self.http_response = http_response
+        self.history = []
+        self.context = context or {}
+
+
+from .base import Pipeline
+
+__all__ = [
+    'Pipeline',
+    'Request',
+    'Response'
+]
+
+try:
+    from .base_async import AsyncPipeline
+    __all__.append('AsyncPipeline')
+except (SyntaxError, ImportError):
+    raise  # Asynchronous pipelines not supported.
+
+

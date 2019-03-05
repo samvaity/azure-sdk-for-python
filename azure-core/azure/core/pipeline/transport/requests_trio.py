@@ -33,17 +33,14 @@ from oauthlib import oauth2
 import requests
 from requests.models import CONTENT_CHUNK_SIZE
 
+from .base import TransportRequest
+from .base_async import AsyncHTTPSender, AsyncTransportResponse
+from .requests import RequestsTransport, RequestsTransportResponse
+from .requests_asyncio import _ResponseStopIteration, _iterate_response_content
 from azure.core.exceptions import (
     TokenExpiredError,
     ClientRequestError,
     raise_with_traceback)
-from .async_abc import AsyncHTTPSender, AsyncTransportResponse
-from . import TransportRequest
-from .requests import (
-    RequestsTransport,
-    RequestsTransportResponse
-)
-from .requests_asyncio import _ResponseStopIteration, _iterate_response_content
 
 
 _LOGGER = logging.getLogger(__name__)

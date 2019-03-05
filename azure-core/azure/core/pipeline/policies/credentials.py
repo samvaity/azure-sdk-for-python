@@ -47,7 +47,7 @@ from azure.core.exceptions import (
     raise_with_traceback
 )
 
-from . import HTTPPolicy
+from .base import HTTPPolicy
 
 
 _LOGGER = logging.getLogger(__name__)

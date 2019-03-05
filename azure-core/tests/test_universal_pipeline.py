@@ -59,7 +59,7 @@ def test_user_agent():
         policy.on_request(Request(request))
         assert request.headers["user-agent"].endswith("mytools")
 
-@mock.patch('azure.core.http_logger._LOGGER')
+@mock.patch('azure.core.pipeline.policies.universal._LOGGER')
 def test_no_log(mock_http_logger):
     universal_request = TransportRequest('GET', 'http://127.0.0.1/')
     request = Request(universal_request)

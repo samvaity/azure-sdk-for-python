@@ -27,8 +27,8 @@ from typing import Any, Callable, AsyncIterator, Optional
 
 import aiohttp
 
-from . import TransportRequest
-from .async_abc import AsyncHTTPSender, AsyncTransportResponse
+from .base import TransportRequest
+from .base_async import AsyncHTTPSender, AsyncTransportResponse
 
 # Matching requests, because why not?
 CONTENT_CHUNK_SIZE = 10 * 1024

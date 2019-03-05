@@ -63,6 +63,6 @@ try:
             'AioHttpContext'
         ])
     except ImportError:
-        pass  # Aiohttp not installed
+        raise  # Aiohttp not installed
 except (ImportError, SyntaxError):
-    pass  # Asynchronous pipelines not supported.
+    raise  # Asynchronous pipelines not supported.

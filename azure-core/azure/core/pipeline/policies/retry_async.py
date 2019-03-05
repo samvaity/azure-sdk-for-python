@@ -46,10 +46,8 @@ from ..exceptions import (
     ClientRequestError,
     raise_with_traceback
 )
-from transport import TransportRequest
-from transport.requests import RequestsTransport
-from . import HTTPSender, HTTPPolicy, Response, Request
 
+from .base import HTTPPolicy
 from .base_async import AsyncHTTPPolicy
 
 _LOGGER = logging.getLogger(__name__)

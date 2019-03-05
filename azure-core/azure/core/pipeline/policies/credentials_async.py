@@ -38,10 +38,7 @@ from azure.core.exceptions import (
     ClientRequestError,
     raise_with_traceback
 )
-from azure.core.pipeline import Response, Request
-from azure.core.pipeline.policies.base_async import AsyncHTTPPolicy
-from azure.core.pipeline.transport.async_abc import AsyncHTTPSender
-from azure.core.pipeline.transport.requests import RequestsContext
+from azure.core.pipeline.policies import AsyncHTTPPolicy
 
 
 class AsyncCredentialsPolicy(AsyncHTTPPolicy):

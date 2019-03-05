@@ -25,10 +25,12 @@
 #--------------------------------------------------------------------------
 import sys
 
-from azure.core.pipeline.transport import TransportRequest
-from azure.core.pipeline.transport.aiohttp import AioHttpTransport
-from azure.core.pipeline.transport.async_abc import AsyncHTTPSender
-from azure.core.pipeline.transport.async_requests import AsyncioRequestsTransport, TrioRequestsTransport
+from azure.core.pipeline.transport import (
+    TransportRequest,
+    AioHttpTransport,
+    AsyncHTTPSender,
+    AsyncioRequestsTransport,
+    TrioRequestsTransport)
 
 from azure.core.configuration import Configuration
 

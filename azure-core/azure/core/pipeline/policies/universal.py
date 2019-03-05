@@ -53,8 +53,6 @@ from azure.core.exceptions import (
     ClientRequestError,
     raise_with_traceback
 )
-from azure.core.pipeline.transport import TransportRequest, HTTPSender
-from azure.core.pipeline.transport.requests import RequestsTransport
 
 
 _LOGGER = logging.getLogger(__name__)

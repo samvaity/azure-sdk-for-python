@@ -28,9 +28,8 @@ import abc
 
 from typing import Any, List, Union, Callable, AsyncIterator, Optional, Generic, TypeVar
 
-from azure.core.pipeline.transport import AsyncHTTPSender
 from azure.core.pipeline import Request, Response, Pipeline
-from azure.core.pipeline.policies import SansIOHTTPPolicy
+from azure.core.pipeline.policies import AsyncHTTPPolicy, SansIOHTTPPolicy
 
 AsyncHTTPResponseType = TypeVar("AsyncHTTPResponseType")
 HTTPRequestType = TypeVar("HTTPRequestType")
@@ -58,7 +57,7 @@ class _SansIOAsyncHTTPPolicyRunner(AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPRes
         super(_SansIOAsyncHTTPPolicyRunner, self).__init__()
         self._policy = policy
 
-    async def send(self, request: Request, **kwargs: Any) -> Response[HTTPRequestType, AsyncHTTPResponseType]:
+    async def send(self, request: Request, **kwargs: Any):
         self._policy.on_request(request, **kwargs)
         try:
             response = await self.next.send(request, **kwargs)  # type: ignore
@@ -72,7 +71,7 @@ class _SansIOAsyncHTTPPolicyRunner(AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPRes
 
 class _AsyncTransportRunner(AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPResponseType]):
 
-    def __init__(self, sender: AsyncHTTPSender[HTTPRequestType, AsyncHTTPResponseType]) -> None:
+    def __init__(self, sender) -> None:
         super(_AsyncTransportRunner, self).__init__()
         self._sender = sender
 
@@ -90,7 +89,7 @@ class AsyncPipeline(AbstractAsyncContextManager, Generic[HTTPRequestType, AsyncH
     of the HTTP sender.
     """
 
-    def __init__(self, transport: AsyncHTTPSender[HTTPRequestType, AsyncHTTPResponseType], policies: List[Union[AsyncHTTPPolicy, SansIOHTTPPolicy]] = None) -> None:
+    def __init__(self, transport, policies: List[Union[AsyncHTTPPolicy, SansIOHTTPPolicy]] = None) -> None:
         self._impl_policies = []  # type: List[AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPResponseType]]
         self._transport = transport
 
@@ -124,7 +123,7 @@ class AsyncPipeline(AbstractAsyncContextManager, Generic[HTTPRequestType, AsyncH
             await self._sender.send(request.http_request, **kwargs)
         )
 
-    async def run(self, request: Request, **kwargs: Any) -> Response[HTTPRequestType, AsyncHTTPResponseType]:
+    async def run(self, request: Request, **kwargs: Any):
         context = self._transport.build_context()
         pipeline_request = Request(request, context)
         first_node = self._impl_policies[0] if self._impl_policies else _AsyncTransportRunner(self._transport)

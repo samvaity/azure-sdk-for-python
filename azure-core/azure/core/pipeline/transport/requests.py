@@ -29,13 +29,13 @@ import requests
 import threading
 
 from oauthlib import oauth2
-from . import (
+from .base import (
     TransportResponse,
     _TransportResponseBase,
     HTTPSender
 )
 
-from ...exceptions import (
+from azure.core.exceptions import (
     ClientRequestError,
     TokenExpiredError,
     TokenInvalidError,

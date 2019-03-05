@@ -24,6 +24,7 @@
 #
 # --------------------------------------------------------------------------
 
+import abc
 import logging
 
 from typing import TYPE_CHECKING, Generic, TypeVar, cast, IO, List, Union, Any, Mapping, Dict, Optional, Tuple, Callable, Iterator  # pylint: disable=unused-import

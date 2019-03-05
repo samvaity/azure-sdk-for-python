@@ -39,16 +39,15 @@ from requests.models import CONTENT_CHUNK_SIZE
 
 from urllib3 import Retry  # Needs requests 2.16 at least to be safe
 
-from ..exceptions import (
+from azure.core.exceptions import (
     TokenExpiredError,
     TokenInvalidError,
     AuthenticationError,
     ClientRequestError,
     raise_with_traceback
 )
-from transport import TransportRequest
-from transport.requests import RequestsTransport
-from . import HTTPSender, HTTPPolicy, Response, Request
+
+from .base import HTTPPolicy
 
 
 _LOGGER = logging.getLogger(__name__)
