@@ -32,7 +32,7 @@ try:
 except ImportError:
     from urllib.parse import urlparse
 import xml.etree.ElementTree as ET
-from azure.core.pipeline import AbstractContextManager
+from azure.core.pipeline import AbstractContextManager, Request, Response
 from azure.core.pipeline.policies import HTTPPolicy, SansIOHTTPPolicy
 from typing import TYPE_CHECKING, Generic, TypeVar, cast, IO, List, Union, Any, Mapping, Dict, Optional, Tuple, Callable, Iterator  # pylint: disable=unused-import
 

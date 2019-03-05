@@ -33,6 +33,7 @@ import requests
 import pytest
 
 from azure.core.exceptions import DeserializationError
+from azure.core.configuration import Configuration
 from azure.core.pipeline import (
     Response,
     Request,
@@ -52,7 +53,7 @@ from azure.core.pipeline.policies.universal import (
 def test_user_agent():
 
     with mock.patch.dict('os.environ', {'AZURE_HTTP_USER_AGENT': "mytools"}):
-        policy = UserAgentPolicy()
+        policy = UserAgentPolicy(None)
         assert policy.user_agent.endswith("mytools")
 
         request = TransportRequest('GET', 'http://127.0.0.1/')
@@ -63,7 +64,7 @@ def test_user_agent():
 def test_no_log(mock_http_logger):
     universal_request = TransportRequest('GET', 'http://127.0.0.1/')
     request = Request(universal_request)
-    http_logger = NetworkTraceLoggingPolicy()
+    http_logger = NetworkTraceLoggingPolicy(Configuration())
     response = Response(request, TransportResponse(universal_request, None))
 
     # By default, no log handler for HTTP

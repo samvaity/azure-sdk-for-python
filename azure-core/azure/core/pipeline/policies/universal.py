@@ -79,7 +79,7 @@ class UserAgentPolicy(SansIOHTTPPolicy):
     _USERAGENT = "User-Agent"
     _ENV_ADDITIONAL_USER_AGENT = 'AZURE_HTTP_USER_AGENT'
 
-    def __init__(self, user_agent, config):  # TODO: Confirm overwrite behaviour
+    def __init__(self, user_agent, config=None):  # TODO: Confirm overwrite behaviour
         # type: (Optional[str], bool) -> None
         if user_agent is None:
             self._user_agent = "python/{} ({}) azure-core/{}".format(
@@ -90,9 +90,12 @@ class UserAgentPolicy(SansIOHTTPPolicy):
         else:
             self._user_agent = user_agent
 
-        self._overwrite = config.user_agent_overwrite
-        if config.user_agent:
-            self.add_user_agent(config.user_agent)
+        if config:
+            self._overwrite = config.user_agent_overwrite
+            if config.user_agent:
+                self.add_user_agent(config.user_agent)
+        else:
+            self._overwrite = False
 
         # Whether you gave me a header explicitly or not,
         # if the env variable is set, add to it.
@@ -127,7 +130,7 @@ class NetworkTraceLoggingPolicy(SansIOHTTPPolicy):
     This accepts both global configuration, and kwargs request level with "enable_http_logger"
     """
     def __init__(self, config):
-        self.enable_http_logger = config.enable_http_logger
+        self.enable_http_logger = config.logging_enable
 
     def on_request(self, request, **kwargs):
         # type: (Request, Any) -> None
