@@ -81,21 +81,18 @@ class RetryPolicy(HTTPPolicy):
     #: Maximum backoff time.
     BACKOFF_MAX = 120
 
-    def __init__(self, total=10, connect=None, read=None, rstatus=None,
-                 method_whitelist=DEFAULT_METHOD_WHITELIST, status_forcelist=None,
-                 backoff_factor=0, raise_on_status=True, respect_retry_after_header=True):
-        self.history = tuple()
-        self.total = total
-        self.connect = connect
-        self.read = read
-        self.status = status
+    def __init__(self, config):
+        self.history = []
+        self.total = config.retry_count_total
+        self.connect = config.retry_count_connect
+        self.read = config.retry_count_read
+        self.status = config.retry_count_status
 
-        self.status_forcelist = status_forcelist or set()
-        self.method_whitelist = method_whitelist
-        self.backoff_factor = backoff_factor
-        self.raise_on_status = raise_on_status
-        self.history = history or tuple()
-        self.respect_retry_after_header = respect_retry_after_header
+        self.status_forcelist = set()
+        self.method_whitelist = DEFAULT_METHOD_WHITELIST
+        self.backoff_factor = config.retry_backoff_factor
+        self.raise_on_status = True
+        self.respect_retry_after_header = True
 
     def get_backoff_time(self):
         """ Formula for computing the current backoff

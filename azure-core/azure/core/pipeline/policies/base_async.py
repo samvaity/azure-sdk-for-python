@@ -52,7 +52,7 @@ HTTPRequestType = TypeVar("HTTPRequestType")
 class AsyncHTTPPolicy(abc.ABC, Generic[HTTPRequestType, AsyncHTTPResponseType]):
     """An http policy ABC.
     """
-    def __init__(self) -> None:
+    def __init__(self, config=None) -> None:
         # next will be set once in the pipeline
         self.next = None  # type: Optional[Union[AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPResponseType], AsyncHTTPSender[HTTPRequestType, AsyncHTTPResponseType]]]
 

@@ -44,7 +44,7 @@ from azure.core.pipeline.policies import AsyncHTTPPolicy
 class AsyncCredentialsPolicy(AsyncHTTPPolicy):
     """Implementation of request-oauthlib except and retry logic.
     """
-    def __init__(self, credentials):
+    def __init__(self, credentials, config=None):
         super(AsyncCredentialsPolicy, self).__init__()
         self._credentials = credentials
 

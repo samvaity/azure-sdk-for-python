@@ -1,61 +1,36 @@
 
-from azure.core import Pipeline, RequestsHttpSender
 
-
-## What role do we want "configuration" to play?
-## - Curently it owns, pipeline, credentials, as well as policy objects
-## - Unclear where we draw the line between ServiceClient/Configuration
-
-class HTTPSender
-
+from azure.core import Configuration, CognitiveServicesCredentials
+from azure.core.pipeline import Pipeline
+from azure.core.pipeline.policies import (
+    CredentialsPolicy,
+    HeadersPolicy,
+    UserAgentPolicy,
+    NetworkTraceLoggingPolicy,
+    ContentDecodePolicy,
+    RetryPolicy,
+    RedirectPolicy
+)
+from azure.core.pipeline.transport import TransportRequest
+from azure.core.pipeline.transport.requests import RequestsTransport
 
 my_config = Configuration(redirect_allow=True, redirect_max=30)
+credentials = CognitiveServicesCredentials("foobar")
 
+policies = [
+    UserAgentPolicy("ServiceUserAgentValue", config=my_config),
+    HeadersPolicy({"CustomHeader": "Value"}, config=my_config)
+    CredentialsPolicy(credentials, config=my_config),
+    ContentDecodePolicy(config=my_config),
+    RedirectPolicy(config=my_config),
+    RetryPolicy(config=my_config),
+    NetworkTraceLoggingPolicy(config=my_config),
+]
 
-pipeline = get_pipeline(credentials, my_config)
-pipeline = get_async_pipeline(credentials, my_config)
+transport = RequestsTransport(my_config)
+pipeline = Pipeline(transport, policies=policies)
 
-
-
-pipeline = AsyncPipeline(transport=None)
-
-with Pipeline() as my_pipeline:
-    my_pipeline.send(something)
-
-async with AsyncPipeline()
-
-
-from azure.service.aio import FooServiceClient
-
-
-my_client = FooServiceClient(creds, config=configuration, retries=10})
-
-class FooServiceClient(object):
-
-    def __init__(self, creds):
-        creds_policy = as_policy(creds)
-        self.pipeline = get_pipeline(creds_policy, configuration)
-
-class AsyncFooServiceClient(object):
-
-    def __init__(self):
-        self.pipeline = get_async_pipeline(configuration)
-
-
-# Default pipeline
-# client = ServiceClient(credentials, url)
-# client.pipeline  #access default pipeline
-
-# # Tweaked pipeline
-# configuration = {'max_redirects': 10, 'max_retries':3, 'proxies':'blah'}
-# client = ServiceClient(credentials, url, config=configuration sender=AlternativeRequestsHttpSender)
-
-# # Custom pipeline
-# HTTPSenderConfiguration()
-# pipeline = Pipeline(policies=[])
-
-# ServiceClient(credentials, url, pipeline=pipeline)
-
-
-# Request -> [p, p, p] -> sender
-sender -> [p, p, p] -> response, deserialize to models
+with pipeline:
+    new_request = TransportRequest("GET", "/")
+    response = pipeline.run(new_request)
+    # deserialize response data

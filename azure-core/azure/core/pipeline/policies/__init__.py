@@ -26,8 +26,8 @@
 
 from .base import HTTPPolicy, SansIOHTTPPolicy
 from .credentials import CredentialsPolicy
-#from .redirect import RedirectPolicy
-#from .retry import RetryPolicy
+from .redirect import RedirectPolicy
+from .retry import RetryPolicy
 from .universal import (
     HeadersPolicy,
     UserAgentPolicy,
@@ -42,7 +42,9 @@ __all__ = [
     'HeadersPolicy',
     'UserAgentPolicy',
     'NetworkTraceLoggingPolicy',
-    'ContentDecodePolicy'
+    'ContentDecodePolicy',
+    'RetryPolicy',
+    'RedirectPolicy'
 ]
 
 try:

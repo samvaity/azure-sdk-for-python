@@ -40,7 +40,7 @@ _LOGGER = logging.getLogger(__name__)
 class HTTPPolicy(ABC, Generic[HTTPRequestType, HTTPResponseType]):
     """An http policy ABC.
     """
-    def __init__(self, configuration=None):
+    def __init__(self, config=None):
         self.next = None
 
     @abc.abstractmethod

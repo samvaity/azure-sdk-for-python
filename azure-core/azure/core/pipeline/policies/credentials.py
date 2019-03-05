@@ -56,7 +56,7 @@ _LOGGER = logging.getLogger(__name__)
 class CredentialsPolicy(HTTPPolicy):
     """Implementation of request-oauthlib except and retry logic.
     """
-    def __init__(self, credentials):
+    def __init__(self, credentials, config=None):
         super(CredentialsPolicy, self).__init__()
         self._credentials = credentials
 

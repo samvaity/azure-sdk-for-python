@@ -34,19 +34,20 @@ class Configuration(object):
         use the format: http://user:password@host
     """
 
+    def __iter__(self):
+        dict_values = dict(self.__dict__)
+        dict_values.pop('to_dict')
+        dict_values.pop('from_dict')
+        for attr, value in dict_values.items():
+            yield attr, value
+
     @classmethod
     def from_dict(cls, dict_values):
         return cls(**dict_values)
 
     @classmethod
     def from_file(cls, filepath):
-        pass
-
-    def to_dict(self):
-        dict_values = self.__dict__
-        dict_values.pop('to_dict')
-        dict_values.pop('from_dict')
-        return dict_values
+        pass  # TODO: Load from config file.
 
     def __init__(self, **kwargs):
         # Communication configuration - TODO: applied per session?
@@ -59,7 +60,7 @@ class Configuration(object):
         # Headers (sent with every requests)
         self.headers = kwargs.pop('headers', {})  # type: Dict[str, str]
 
-        # ProxyConfiguration
+        # ProxyConfiguration (used to configure transport)
         self.proxies = kwargs.pop('proxies', {})
         self.proxies_use_env_settings = kwargs.pop('proxies_use_env_settings', True)
 
@@ -70,9 +71,10 @@ class Configuration(object):
         # Retry configuration
         safe_codes = [i for i in range(500) if i != 408] + [501, 505]
         self.retry_status_codes = kwargs.pop('retry_status_codes', [i for i in range(999) if i not in safe_codes])
-        self.retry_count_total = kwargs.pop('retry_count_total', 3)
+        self.retry_count_total = kwargs.pop('retry_count_total', 10)
         self.retry_count_connect = kwargs.pop('retry_count_connect', 3)
         self.retry_count_read = kwargs.pop('retry_count_read', 3)
+        self.retry_count_status = kwargs.pop('retry_count_status', 3)
         self.retry_backoff_factor = kwargs.pop('retry_backoff_factor', 0.8)  # TODO: Is this value universal
         self.retry_backoff_max = kwargs.pop('retry_backoff_max', 90)  # TODO: Standardized value?
 

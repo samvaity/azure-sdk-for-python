@@ -64,9 +64,10 @@ class HeadersPolicy(SansIOHTTPPolicy):
 
     This overwrite any headers already defined in the request.
     """
-    def __init__(self, headers):
+    def __init__(self, headers, config):
         # type: (Mapping[str, str]) -> None
-        self.headers = headers
+        self.headers = config.headers
+        self.headers.update(headers)
 
     def on_request(self, request, **kwargs):
         # type: (Request, Any) -> None
@@ -78,9 +79,8 @@ class UserAgentPolicy(SansIOHTTPPolicy):
     _USERAGENT = "User-Agent"
     _ENV_ADDITIONAL_USER_AGENT = 'AZURE_HTTP_USER_AGENT'
 
-    def __init__(self, user_agent=None, overwrite=False):  # TODO: Confirm overwrite behaviour
+    def __init__(self, user_agent, config):  # TODO: Confirm overwrite behaviour
         # type: (Optional[str], bool) -> None
-        self._overwrite = overwrite
         if user_agent is None:
             self._user_agent = "python/{} ({}) azure-core/{}".format(
                 platform.python_version(),
@@ -89,6 +89,10 @@ class UserAgentPolicy(SansIOHTTPPolicy):
             )
         else:
             self._user_agent = user_agent
+
+        self._overwrite = config.user_agent_overwrite
+        if config.user_agent:
+            self.add_user_agent(config.user_agent)
 
         # Whether you gave me a header explicitly or not,
         # if the env variable is set, add to it.
@@ -122,8 +126,8 @@ class NetworkTraceLoggingPolicy(SansIOHTTPPolicy):
 
     This accepts both global configuration, and kwargs request level with "enable_http_logger"
     """
-    def __init__(self, enable_http_logger=False):
-        self.enable_http_logger = enable_http_logger
+    def __init__(self, config):
+        self.enable_http_logger = config.enable_http_logger
 
     def on_request(self, request, **kwargs):
         # type: (Request, Any) -> None
@@ -184,10 +188,6 @@ class NetworkTraceLoggingPolicy(SansIOHTTPPolicy):
 
 
 class ContentDecodePolicy(SansIOHTTPPolicy):
-
-    # TODO: Discuss concept of mandatory pipeline policy.
-    # What impact will this have on constructing custom pipelines.
-    # Why does this not get a default in sync pipeline?
 
     JSON_MIMETYPES = [
         'application/json',
