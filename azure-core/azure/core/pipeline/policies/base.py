@@ -24,33 +24,17 @@
 #
 # --------------------------------------------------------------------------
 
-import abc
 import logging
 
 from typing import TYPE_CHECKING, Generic, TypeVar, cast, IO, List, Union, Any, Mapping, Dict, Optional, Tuple, Callable, Iterator  # pylint: disable=unused-import
+
+from azure.core.pipeline import ABC
 
 HTTPResponseType = TypeVar("HTTPResponseType")
 HTTPRequestType = TypeVar("HTTPRequestType")
 
 _LOGGER = logging.getLogger(__name__)
 
-try:
-    ABC = abc.ABC
-except AttributeError: # Python 2.7, abc exists, but not ABC
-    ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})  # type: ignore
-
-try:
-    from contextlib import AbstractContextManager  # type: ignore
-except ImportError: # Python <= 3.5
-    class AbstractContextManager(object):  # type: ignore
-        def __enter__(self):
-            """Return `self` upon entering the runtime context."""
-            return self
-
-        @abc.abstractmethod
-        def __exit__(self, exc_type, exc_value, traceback):
-            """Raise any exception triggered within the runtime context."""
-            return None
 
 class HTTPPolicy(ABC, Generic[HTTPRequestType, HTTPResponseType]):
     """An http policy ABC.

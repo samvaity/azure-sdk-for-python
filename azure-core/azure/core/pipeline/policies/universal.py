@@ -43,7 +43,6 @@ from requests.models import CONTENT_CHUNK_SIZE
 
 from azure.core import __version__  as azcore_version
 from .base import HTTPPolicy, SansIOHTTPPolicy
-from ...http_logger import log_request, log_response
 from urllib3 import Retry  # Needs requests 2.16 at least to be safe
 
 from azure.core.exceptions import (
@@ -132,13 +131,58 @@ class NetworkTraceLoggingPolicy(SansIOHTTPPolicy):
         # type: (Request, Any) -> None
         http_request = request.http_request
         if kwargs.get("enable_http_logger", self.enable_http_logger):
-            log_request(None, http_request)
+            if not _LOGGER.isEnabledFor(logging.DEBUG):
+                return
+
+            try:
+                _LOGGER.debug("Request URL: %r", http_request.url)
+                _LOGGER.debug("Request method: %r", http_request.method)
+                _LOGGER.debug("Request headers:")
+                for header, value in http_request.headers.items():
+                    if header.lower() == 'authorization':
+                        value = '*****'
+                    _LOGGER.debug("    %r: %r", header, value)
+                _LOGGER.debug("Request body:")
+
+                # We don't want to log the binary data of a file upload.
+                if isinstance(http_request.body, types.GeneratorType):
+                    _LOGGER.debug("File upload")
+                else:
+                    _LOGGER.debug(str(http_request.body))
+            except Exception as err:  # pylint: disable=broad-except
+                _LOGGER.debug("Failed to log request: %r", err)
 
     def on_response(self, request, response, **kwargs):
         # type: (Request, Response, Any) -> None
-        http_request = request.http_request
         if kwargs.get("enable_http_logger", self.enable_http_logger):
-            log_response(None, http_request, response.http_response, result=response)
+            if not _LOGGER.isEnabledFor(logging.DEBUG):
+                return
+
+            try:
+                _LOGGER.debug("Response status: %r", response.http_response.status_code)
+                _LOGGER.debug("Response headers:")
+                for res_header, value in response.http_response.headers.items():
+                    _LOGGER.debug("    %r: %r", res_header, value)
+
+                # We don't want to log binary data if the response is a file.
+                _LOGGER.debug("Response content:")
+                pattern = re.compile(r'attachment; ?filename=["\w.]+', re.IGNORECASE)
+                header = response.http_response.headers.get('content-disposition')
+
+                if header and pattern.match(header):
+                    filename = header.partition('=')[2]
+                    _LOGGER.debug("File attachments: %s", filename)
+                elif response.http_response.headers.get("content-type", "").endswith("octet-stream"):
+                    _LOGGER.debug("Body contains binary data.")
+                elif response.http_response.headers.get("content-type", "").startswith("image"):
+                    _LOGGER.debug("Body contains image data.")
+                else:
+                    if kwargs.get('stream', False):
+                        _LOGGER.debug("Body is streamable")
+                    else:
+                        _LOGGER.debug(response.http_response.text())
+            except Exception as err:  # pylint: disable=broad-except
+                _LOGGER.debug("Failed to log response: %s", repr(err))
 
 
 class ContentDecodePolicy(SansIOHTTPPolicy):

@@ -25,27 +25,16 @@
 # --------------------------------------------------------------------------
 
 import abc
-from . import _TransportResponseBase
-from .. import Request, Response, Pipeline
-from ..policies.base import SansIOHTTPPolicy
+from .base import _TransportResponseBase
+from azure.core.pipeline import Request, Response, Pipeline, AbstractAsyncContextManager
+from azure.core.pipeline.policies import SansIOHTTPPolicy
 from typing import Any, List, Union, Callable, AsyncIterator, Optional, Generic, TypeVar
 
-try:
-    from contextlib import AbstractAsyncContextManager  # type: ignore
-except ImportError: # Python <= 3.7
-    class AbstractAsyncContextManager(object):  # type: ignore
-        async def __aenter__(self):
-            """Return `self` upon entering the runtime context."""
-            return self
-
-        @abc.abstractmethod
-        async def __aexit__(self, exc_type, exc_value, traceback):
-            """Raise any exception triggered within the runtime context."""
-            return None
 
 AsyncHTTPResponseType = TypeVar("AsyncHTTPResponseType")
 HTTPResponseType = TypeVar("HTTPResponseType")
 HTTPRequestType = TypeVar("HTTPRequestType")
+
 
 class AsyncTransportResponse(_TransportResponseBase):
 

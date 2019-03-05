@@ -28,12 +28,13 @@ import abc
 
 from typing import Any, List, Union, Callable, AsyncIterator, Optional, Generic, TypeVar
 
-from azure.core.pipeline.transport.async_abc import AsyncHTTPSender
-from . import Request, Response, Pipeline
-from .policies.base import SansIOHTTPPolicy
+from azure.core.pipeline.transport import AsyncHTTPSender
+from azure.core.pipeline import Request, Response, Pipeline
+from azure.core.pipeline.policies import SansIOHTTPPolicy
 
 AsyncHTTPResponseType = TypeVar("AsyncHTTPResponseType")
 HTTPRequestType = TypeVar("HTTPRequestType")
+
 
 try:
     from contextlib import AbstractAsyncContextManager  # type: ignore
@@ -47,22 +48,6 @@ except ImportError: # Python <= 3.7
         async def __aexit__(self, exc_type, exc_value, traceback):
             """Raise any exception triggered within the runtime context."""
             return None
-
-
-class AsyncHTTPPolicy(abc.ABC, Generic[HTTPRequestType, AsyncHTTPResponseType]):
-    """An http policy ABC.
-    """
-    def __init__(self) -> None:
-        # next will be set once in the pipeline
-        self.next = None  # type: Optional[Union[AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPResponseType], AsyncHTTPSender[HTTPRequestType, AsyncHTTPResponseType]]]
-
-    @abc.abstractmethod
-    async def send(self, request: Request, **kwargs: Any) -> Response[HTTPRequestType, AsyncHTTPResponseType]:
-        """Mutate the request.
-
-        Context content is dependent of the HTTPSender.
-        """
-        pass
 
 
 class _SansIOAsyncHTTPPolicyRunner(AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPResponseType]):
@@ -145,8 +130,3 @@ class AsyncPipeline(AbstractAsyncContextManager, Generic[HTTPRequestType, AsyncH
         first_node = self._impl_policies[0] if self._impl_policies else _AsyncTransportRunner(self._transport)
         return await first_node.send(pipeline_request, **kwargs)  # type: ignore
 
-
-__all__ = [
-    'AsyncHTTPPolicy',
-    'AsyncPipeline',
-]

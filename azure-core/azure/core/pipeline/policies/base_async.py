@@ -28,20 +28,7 @@ import abc
 
 from typing import Generic, TypeVar, Any, List, Union, Callable, AsyncIterator, Optional
 
-try:
-    from contextlib import AbstractAsyncContextManager  # type: ignore
-except ImportError: # Python <= 3.7
-    class AbstractAsyncContextManager(object):  # type: ignore
-        async def __aenter__(self):
-            """Return `self` upon entering the runtime context."""
-            return self
-
-        @abc.abstractmethod
-        async def __aexit__(self, exc_type, exc_value, traceback):
-            """Raise any exception triggered within the runtime context."""
-            return None
-
-from .. import Request, Response, Pipeline
+from azure.core.pipeline import Request, Response, Pipeline, AbstractAsyncContextManager
 
 
 AsyncHTTPResponseType = TypeVar("AsyncHTTPResponseType")

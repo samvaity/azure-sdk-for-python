@@ -56,7 +56,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 
-class RetryPolicy(AsyncHTTPPolicy):
+class AsyncRetryPolicy(AsyncHTTPPolicy):
     """Implementation of request-oauthlib except and retry logic.
     """
     DEFAULT_METHOD_WHITELIST = frozenset([
