@@ -26,7 +26,7 @@
 # --------------------------------------------------------------------------
 import abc
 
-from typing import Any, List, Union, Callable, AsyncIterator, Optional
+from typing import Generic, TypeVar, Any, List, Union, Callable, AsyncIterator, Optional
 
 try:
     from contextlib import AbstractAsyncContextManager  # type: ignore
@@ -41,7 +41,12 @@ except ImportError: # Python <= 3.7
             """Raise any exception triggered within the runtime context."""
             return None
 
-from . import ClientRequest, ClientResponse
+from .. import Request, Response, Pipeline
+
+
+AsyncHTTPResponseType = TypeVar("AsyncHTTPResponseType")
+HTTPResponseType = TypeVar("HTTPResponseType")
+HTTPRequestType = TypeVar("HTTPRequestType")
 
 
 class AsyncHTTPPolicy(abc.ABC, Generic[HTTPRequestType, AsyncHTTPResponseType]):

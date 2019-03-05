@@ -23,3 +23,12 @@
 # IN THE SOFTWARE.
 #
 # --------------------------------------------------------------------------
+
+from .base import HTTPPolicy, SansIOHTTPPolicy
+from .credentials import CredentialsPolicy
+from .universal import (
+    HeadersPolicy,
+    UserAgentPolicy,
+    NetworkTraceLoggingPolicy,
+    ContentDecodePolicy
+)

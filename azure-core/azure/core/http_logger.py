@@ -31,13 +31,13 @@ import types
 from typing import Any, Optional, TYPE_CHECKING  # pylint: disable=unused-import
 
 if TYPE_CHECKING:
-    from pipeline.transport import _TransportRequest, _TransportResponse  # pylint: disable=unused-import
+    from pipeline.transport import TransportRequest, TransportResponse  # pylint: disable=unused-import
 
 _LOGGER = logging.getLogger(__name__)
 
 
 def log_request(_, request, *_args, **_kwargs):
-    # type: (Any, _TransportRequest, str, str) -> None
+    # type: (Any, TransportRequest, str, str) -> None
     """Log a client request.
 
     :param _: Unused in current version (will be None)
@@ -66,7 +66,7 @@ def log_request(_, request, *_args, **_kwargs):
 
 
 def log_response(_, _request, response, *_args, **kwargs):
-    # type: (Any, _TransportRequest, _TransportResponse, str, Any) -> Optional[_TransportResponse]
+    # type: (Any, TransportRequest, TransportResponse, str, Any) -> Optional[TransportResponse]
     """Log a server response.
 
     :param _: Unused in current version (will be None)

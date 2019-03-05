@@ -89,7 +89,7 @@ class HTTPSender(AbstractContextManager, ABC, Generic[HTTPRequestType, HTTPRespo
         return None
 
 
-class _TransportRequest(object):
+class TransportRequest(object):
     """Represents a HTTP request.
 
     URL can be given without query parameters, to be added later using "format_parameters".
@@ -114,7 +114,7 @@ class _TransportRequest(object):
         self.data = data
 
     def __repr__(self):
-        return '<_TransportRequest [%s]>' % (self.method)
+        return '<TransportRequest [%s]>' % (self.method)
 
     @property
     def body(self):
@@ -217,7 +217,7 @@ class _TransportResponseBase(object):
     Full in-memory using "body" as bytes.
     """
     def __init__(self, request, internal_response):
-        # type: (_TransportRequest, Any) -> None
+        # type: (TransportRequest, Any) -> None
         self.request = request
         self.internal_response = internal_response
         self.status_code = None  # type: Optional[int]
@@ -246,7 +246,7 @@ class _TransportResponseBase(object):
             raise ClientRequestError("Received status code {}".format(self.status_code))
 
 
-class _TransportResponse(_TransportResponseBase):
+class TransportResponse(_TransportResponseBase):
 
 
     def stream_download(self, chunk_size=None, callback=None):
@@ -264,7 +264,6 @@ class _TransportResponse(_TransportResponseBase):
 
 __all__ = [
     'HTTPSender',
-    "_TransportRequest",
-    "_TransportResponseBase",
-    '_TransportResponse'
+    "TransportRequest",
+    'TransportResponse'
 ]

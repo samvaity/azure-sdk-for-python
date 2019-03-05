@@ -25,17 +25,10 @@
 #--------------------------------------------------------------------------
 import sys
 
-from azure.core.pipeline.transport import _TransportRequest
+from azure.core.pipeline.transport import TransportRequest
 from azure.core.pipeline.transport.aiohttp import AioHttpTransport
 from azure.core.pipeline.transport.async_abc import AsyncHTTPSender
-
-
-# TODO: copy these?
-# from msrest.universal_http.async_requests import (
-#     AsyncBasicRequestsHTTPSender,
-#     AsyncRequestsHTTPSender,
-#     AsyncTrioRequestsHTTPSender,
-# )
+from azure.core.pipeline.transport.async_requests import AsyncioRequestsTransport, TrioRequestsTransport
 
 from azure.core.configuration import Configuration
 
@@ -48,44 +41,41 @@ import pytest
 async def test_basic_aiohttp():
 
     conf = Configuration()
-    request = _TransportRequest("GET", "http://bing.com")
+    request = TransportRequest("GET", "http://bing.com")
     async with AioHttpTransport(conf) as sender:
         response = await sender.send(request)
         assert response.body() is not None
 
-    assert sender._session.closed
+    assert sender.session.closed
     assert response.status_code == 200
 
-@pytest.mark.skip("TODO: need AsyncBasicRequestsHTTPSender")
 @pytest.mark.asyncio
 async def test_basic_async_requests():
 
-    request = _TransportRequest("GET", "http://bing.com")
-    async with AsyncBasicRequestsHTTPSender() as sender:
+    request = TransportRequest("GET", "http://bing.com")
+    async with AsyncioRequestsTransport() as sender:
         response = await sender.send(request)
         assert response.body() is not None
 
     assert response.status_code == 200
 
-@pytest.mark.skip("TODO: need AsyncRequestsHTTPSender")
 @pytest.mark.asyncio
 async def test_conf_async_requests():
 
-    conf = Configuration("http://bing.com/")
-    request = _TransportRequest("GET", "http://bing.com/")
-    async with AsyncRequestsHTTPSender(conf) as sender:
+    conf = Configuration()
+    request = TransportRequest("GET", "http://bing.com/")
+    async with AsyncioRequestsTransport(conf) as sender:
         response = await sender.send(request)
         assert response.body() is not None
 
     assert response.status_code == 200
 
-@pytest.mark.skip("TODO: need AsyncTrioRequestsHTTPSender")
 def test_conf_async_trio_requests():
 
     async def do():
-        conf = Configuration("http://bing.com/")
-        request = _TransportRequest("GET", "http://bing.com/")
-        async with AsyncTrioRequestsHTTPSender(conf) as sender:
+        conf = Configuration()
+        request = TransportRequest("GET", "http://bing.com/")
+        async with TrioRequestsTransport(conf) as sender:
             return await sender.send(request)
             assert response.body() is not None
 

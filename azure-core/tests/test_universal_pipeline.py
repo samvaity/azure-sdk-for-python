@@ -38,14 +38,14 @@ from azure.core.pipeline import (
     Request,
 )
 from azure.core.pipeline.transport import (
-    _TransportRequest,
-    _TransportResponse,
+    TransportRequest,
+    TransportResponse,
 )
 from azure.core.pipeline.transport.requests import RequestsTransportResponse
 
 from azure.core.pipeline.policies.universal import (
-    HTTPLogger,
-    RawDeserializer,
+    NetworkTraceLoggingPolicy,
+    ContentDecodePolicy,
     UserAgentPolicy
 )
 
@@ -55,16 +55,16 @@ def test_user_agent():
         policy = UserAgentPolicy()
         assert policy.user_agent.endswith("mytools")
 
-        request = _TransportRequest('GET', 'http://127.0.0.1/')
+        request = TransportRequest('GET', 'http://127.0.0.1/')
         policy.on_request(Request(request))
         assert request.headers["user-agent"].endswith("mytools")
 
 @mock.patch('azure.core.http_logger._LOGGER')
 def test_no_log(mock_http_logger):
-    universal_request = _TransportRequest('GET', 'http://127.0.0.1/')
+    universal_request = TransportRequest('GET', 'http://127.0.0.1/')
     request = Request(universal_request)
-    http_logger = HTTPLogger()
-    response = Response(request, _TransportResponse(universal_request, None))
+    http_logger = NetworkTraceLoggingPolicy()
+    response = Response(request, TransportResponse(universal_request, None))
 
     # By default, no log handler for HTTP
     http_logger.on_request(request)
@@ -105,10 +105,10 @@ def test_no_log(mock_http_logger):
 
 
 def test_raw_deserializer():
-    raw_deserializer = RawDeserializer()
+    raw_deserializer = ContentDecodePolicy()
 
     def build_response(body, content_type=None):
-        class MockResponse(_TransportResponse):
+        class MockResponse(TransportResponse):
             def __init__(self, body, content_type):
                 super(MockResponse, self).__init__(None, None)
                 self._body = body

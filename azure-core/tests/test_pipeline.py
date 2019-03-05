@@ -42,7 +42,7 @@ import pytest
 from azure.core.pipeline import Pipeline
 from azure.core.pipeline.policies.base import SansIOHTTPPolicy
 from azure.core.pipeline.transport import (
-    _TransportRequest,
+    TransportRequest,
     HTTPSender
     # ClientRawResponse, TODO: not yet copied from msrest
 )
@@ -61,7 +61,7 @@ def test_sans_io_exception():
 
     pipeline = Pipeline(BrokenSender(), [SansIOHTTPPolicy()])
 
-    req = _TransportRequest("GET", "/")
+    req = TransportRequest("GET", "/")
     with pytest.raises(ValueError):
         pipeline.run(req)
 
@@ -78,7 +78,7 @@ def test_sans_io_exception():
 class TestClientRequest(unittest.TestCase):
     def test_request_data(self):
 
-        request = _TransportRequest("GET", "/")
+        request = TransportRequest("GET", "/")
         data = "Lots of dataaaa"
         request.add_content(data)
 
@@ -86,7 +86,7 @@ class TestClientRequest(unittest.TestCase):
         self.assertEqual(request.headers.get("Content-Length"), "17")
 
     def test_request_xml(self):
-        request = _TransportRequest("GET", "/")
+        request = TransportRequest("GET", "/")
         data = ET.Element("root")
         request.add_content(data)
 
@@ -94,36 +94,11 @@ class TestClientRequest(unittest.TestCase):
 
     def test_request_url_with_params(self):
 
-        request = _TransportRequest("GET", "/")
+        request = TransportRequest("GET", "/")
         request.url = "a/b/c?t=y"
         request.format_parameters({"g": "h"})
 
         self.assertIn(request.url, ["a/b/c?g=h&t=y", "a/b/c?t=y&g=h"])
-
-
-@pytest.mark.skip("TODO: ClientRawResponse not yet copied from msrest")
-class TestClientResponse(unittest.TestCase):
-    class Colors(Enum):
-        red = "red"
-        blue = "blue"
-
-    def test_raw_response(self):
-
-        response = mock.create_autospec(requests.Response)
-        response.headers = {}
-        response.headers["my-test"] = "1999-12-31T23:59:59-23:59"
-        response.headers["colour"] = "red"
-
-        raw = ClientRawResponse([], response)
-
-        raw.add_headers(
-            {
-                "my-test": "iso-8601",
-                "another_header": "str",
-                "colour": TestClientResponse.Colors,
-            }
-        )
-        self.assertIsInstance(raw.headers["my-test"], datetime.datetime)
 
 
 if __name__ == "__main__":

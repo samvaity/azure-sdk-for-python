@@ -34,7 +34,7 @@ except ImportError:
     from urllib.parse import urlparse
 import xml.etree.ElementTree as ET
 from .transport import HTTPSender
-from .policies.base import HTTPPolicy, SansIOHTTPPolicy
+from .policies import HTTPPolicy, SansIOHTTPPolicy
 from typing import TYPE_CHECKING, Generic, TypeVar, cast, IO, List, Union, Any, Mapping, Dict, Optional, Tuple, Callable, Iterator  # pylint: disable=unused-import
 
 HTTPResponseType = TypeVar("HTTPResponseType")
@@ -104,10 +104,10 @@ class Pipeline(AbstractContextManager, Generic[HTTPRequestType, HTTPResponseType
     of the HTTP sender.
     """
 
-    def __init__(self, sender, policies=None):
+    def __init__(self, transport, policies=None):
         # type: (HTTPSender, List[Union[HTTPPolicy, SansIOHTTPPolicy]]) -> None
         self._impl_policies = []  # type: List[HTTPPolicy]
-        self._transport = sender  # type: HTTPPolicy
+        self._transport = transport  # type: HTTPPolicy
 
         for policy in (policies or []):
             if isinstance(policy, SansIOHTTPPolicy):

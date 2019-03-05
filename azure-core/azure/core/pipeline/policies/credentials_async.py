@@ -33,21 +33,22 @@ from oauthlib import oauth2
 import requests
 from requests.models import CONTENT_CHUNK_SIZE
 
-from ..exceptions import (
+from azure.core.exceptions import (
     TokenExpiredError,
     ClientRequestError,
     raise_with_traceback
 )
-from ..universal_http.async_requests import AsyncBasicRequestsHTTPSender
-from . import AsyncHTTPSender, AsyncHTTPPolicy, Response, Request
-from .requests import RequestsContext
+from azure.core.pipeline import Response, Request
+from azure.core.pipeline.policies.base_async import AsyncHTTPPolicy
+from azure.core.pipeline.transport.async_abc import AsyncHTTPSender
+from azure.core.pipeline.transport.requests import RequestsContext
 
 
 class AsyncCredentialsPolicy(AsyncHTTPPolicy):
     """Implementation of request-oauthlib except and retry logic.
     """
     def __init__(self, credentials):
-        super(AsyncRequestsCredentialsPolicy, self).__init__()
+        super(AsyncCredentialsPolicy, self).__init__()
         self._credentials = credentials
 
     async def send(self, request, **kwargs):

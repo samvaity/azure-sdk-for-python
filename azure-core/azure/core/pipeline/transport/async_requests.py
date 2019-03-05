@@ -33,15 +33,15 @@ from oauthlib import oauth2
 import requests
 from requests.models import CONTENT_CHUNK_SIZE
 
-from ..exceptions import (
+from azure.core.exceptions import (
     TokenExpiredError,
     ClientRequestError,
     raise_with_traceback)
-from . import AsyncHTTPSender, ClientRequest, AsyncClientResponse
+from .async_abc import AsyncHTTPSender, AsyncTransportResponse
+from . import TransportRequest
 from .requests import (
-    BasicRequestsHTTPSender,
-    RequestsHTTPSender,
-    HTTPRequestsClientResponse
+    RequestsTransport,
+    RequestsTransportResponse
 )
 
 
@@ -61,26 +61,26 @@ def _get_running_loop():
 class AsyncioRequestsTransport(RequestsTransport, AsyncHTTPSender):  # type: ignore
 
     async def __aenter__(self):
-        return super(AsyncRequestsTransport, self).__enter__()
+        return super(AsyncioRequestsTransport, self).__enter__()
 
     async def __aexit__(self, *exc_details):  # pylint: disable=arguments-differ
-        return super(AsyncRequestsTransport, self).__exit__()
+        return super(AsyncioRequestsTransport, self).__exit__()
 
-    async def send(self, request: ClientRequest, **kwargs: Any) -> AsyncClientResponse:  # type: ignore
+    async def send(self, request: TransportRequest, **kwargs: Any) -> AsyncTransportResponse:  # type: ignore
         """Send the request using this HTTP sender.
         """
         loop = kwargs.get("loop", _get_running_loop())
         future = loop.run_in_executor(
             None,
             functools.partial(
-                session.request,
+                self.session.request,
                 request.method,
                 request.url,
                 **kwargs
             )
         )
         try:
-            return AsyncRequestsClientResponse(
+            return AsyncioRequestsTransportResponse(
                 request,
                 await future
             )
@@ -132,7 +132,7 @@ class AsyncioStreamDownloadGenerator(AsyncIterator):
             raise
 
 
-class AsyncioRequestsTransportResponse(AsyncClientResponse, HTTPRequestsClientResponse):
+class AsyncioRequestsTransportResponse(AsyncTransportResponse, RequestsTransportResponse):
 
     def stream_download(self, chunk_size: Optional[int] = None, callback: Optional[Callable] = None) -> AsyncIteratorType[bytes]:
         """Generator for streaming request body data.
@@ -140,7 +140,7 @@ class AsyncioRequestsTransportResponse(AsyncClientResponse, HTTPRequestsClientRe
         :param callback: Custom callback for monitoring progress.
         :param int chunk_size:
         """
-        return StreamDownloadGenerator(
+        return AsyncioStreamDownloadGenerator(
             self.internal_response,
             callback,
             chunk_size
@@ -178,7 +178,7 @@ try:
                 self.response.close()
                 raise
 
-    class TrioRequestsTransportResponse(AsyncClientResponse, HTTPRequestsClientResponse):
+    class TrioRequestsTransportResponse(AsyncTransportResponse, RequestsTransportResponse):
 
         def stream_download(self, chunk_size: Optional[int] = None, callback: Optional[Callable] = None) -> AsyncIteratorType[bytes]:
             """Generator for streaming request body data.
@@ -201,7 +201,7 @@ try:
         async def __aexit__(self, *exc_details):  # pylint: disable=arguments-differ
             return super(TrioRequestsTransport, self).__exit__()
 
-        async def send(self, request: ClientRequest, **kwargs: Any) -> AsyncClientResponse:  # type: ignore
+        async def send(self, request: TransportRequest, **kwargs: Any) -> AsyncTransportResponse:  # type: ignore
             """Send the request using this HTTP sender.
             """
             trio_limiter = kwargs.get("trio_limiter", None)
@@ -215,7 +215,7 @@ try:
                 limiter=trio_limiter
             )
             try:
-                return TrioAsyncRequestsClientResponse(
+                return TrioRequestsTransportResponse(
                     request,
                     await future
                 )

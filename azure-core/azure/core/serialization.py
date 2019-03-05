@@ -1288,7 +1288,7 @@ class Deserializer(object):
                     found_value = key_extractor(attr, attr_desc, data)
                     if found_value is not None:
                         if raw_value is not None and raw_value != found_value:
-                            raise KeyError('Use twice the key: "{}"'.format(attr))
+                            raise KeyError('Duplicate key: "{}"'.format(attr))
                         raw_value = found_value
 
                 value = self.deserialize_data(raw_value, attr_desc['type'])
@@ -1339,8 +1339,8 @@ class Deserializer(object):
     def _unpack_content(raw_data, content_type=None):
         """Extract the correct structure for deserialization.
 
-        If raw_data is a PipelineResponse, try to extract the result of RawDeserializer.
-        if we can't, raise. Your Pipeline should have a RawDeserializer.
+        If raw_data is a PipelineResponse, try to extract the result of ContentDecodePolicy.
+        if we can't, raise. Your Pipeline should have a ContentDecodePolicy.
 
         If not a pipeline response and raw_data is bytes or string, use content-type
         to decode it. If no content-type, try JSON.
@@ -1354,31 +1354,31 @@ class Deserializer(object):
         """
         # This avoids a circular dependency. We might want to consider RawDesializer is more generic
         # than the pipeline concept, and put it in a toolbox, used both here and in pipeline. TBD.
-        from .pipeline.policies.universal import RawDeserializer
+        from .pipeline.policies.universal import ContentDecodePolicy
 
         # Assume this is enough to detect a Pipeline Response without importing it
         context = getattr(raw_data, "context", {})
         if context:
-            if RawDeserializer.CONTEXT_NAME in context:
-                return context[RawDeserializer.CONTEXT_NAME]
-            raise ValueError("This pipeline didn't have the RawDeserializer policy; can't deserialize")
+            if ContentDecodePolicy.CONTEXT_NAME in context:
+                return context[ContentDecodePolicy.CONTEXT_NAME]
+            raise ValueError("This pipeline didn't have the ContentDecodePolicy; can't deserialize")
 
         #Assume this is enough to recognize universal_http.ClientResponse without importing it
         if hasattr(raw_data, "body"):
-            return RawDeserializer.deserialize_from_http_generics(
+            return ContentDecodePolicy.deserialize_from_http_generics(
                 raw_data.text(),
                 raw_data.headers
             )
 
         # Assume this enough to recognize requests.Response without importing it.
         if hasattr(raw_data, '_content_consumed'):
-            return RawDeserializer.deserialize_from_http_generics(
+            return ContentDecodePolicy.deserialize_from_http_generics(
                 raw_data.text,
                 raw_data.headers
             )
 
         if isinstance(raw_data, (basestring, bytes)) or hasattr(raw_data, 'read'):
-            return RawDeserializer.deserialize_from_text(raw_data, content_type)
+            return ContentDecodePolicy.deserialize_from_text(raw_data, content_type)
         return raw_data
 
     def _instantiate_model(self, response, attrs, additional_properties=None):

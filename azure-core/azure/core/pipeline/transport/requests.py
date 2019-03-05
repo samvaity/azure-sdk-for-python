@@ -30,7 +30,7 @@ import threading
 
 from oauthlib import oauth2
 from . import (
-    _TransportResponse,
+    TransportResponse,
     _TransportResponseBase,
     HTTPSender
 )
@@ -51,10 +51,10 @@ class RequestsContext(object):
         self.session = session
 
 
-class RequestsTransportResponseBase(_TransportResponseBase):
+class _RequestsTransportResponseBase(_TransportResponseBase):
 
     def __init__(self, request, requests_response):
-        super(RequestsTransportResponseBase, self).__init__(request, requests_response)
+        super(_RequestsTransportResponseBase, self).__init__(request, requests_response)
         self.status_code = requests_response.status_code
         self.headers = requests_response.headers
         self.reason = requests_response.reason
@@ -71,7 +71,7 @@ class RequestsTransportResponseBase(_TransportResponseBase):
         self.internal_response.raise_for_status()
 
 
-class RequestsTransportResponse(RequestsTransportResponseBase, _TransportResponse):
+class RequestsTransportResponse(_RequestsTransportResponseBase, TransportResponse):
 
     def stream_download(self, chunk_size=None, callback=None):
         # type: (Optional[int], Optional[Callable]) -> Iterator[bytes]
@@ -105,7 +105,7 @@ class RequestsTransport(HTTPSender):
 
     _protocols = ['http://', 'https://']
 
-    def __init__(self, configuration, session=None):
+    def __init__(self, configuration=None, session=None):
         # type: (Optional[requests.Session]) -> None
         self._session_mapping = threading.local()
         self.config = configuration
@@ -150,14 +150,14 @@ class RequestsTransport(HTTPSender):
         self.session.close()
 
     def send(self, request, **kwargs):
-        # type: (_TransportRequest, Any) -> _TransportResponse
+        # type: (TransportRequest, Any) -> TransportResponse
         """Send request object according to configuration.
 
         Allowed kwargs are:
         - session : will override the driver session and use yours. Should NOT be done unless really required.
         - anything else is sent straight to requests.
 
-        :param _TransportRequest request: The request object to be sent.
+        :param TransportRequest request: The request object to be sent.
         """
         try:
             response = self.session.request(

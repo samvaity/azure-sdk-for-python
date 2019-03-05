@@ -105,9 +105,9 @@ class AsyncPipeline(AbstractAsyncContextManager, Generic[HTTPRequestType, AsyncH
     of the HTTP sender.
     """
 
-    def __init__(self, sender: AsyncHTTPSender[HTTPRequestType, AsyncHTTPResponseType], policies: List[Union[AsyncHTTPPolicy, SansIOHTTPPolicy]] = None) -> None:
+    def __init__(self, transport: AsyncHTTPSender[HTTPRequestType, AsyncHTTPResponseType], policies: List[Union[AsyncHTTPPolicy, SansIOHTTPPolicy]] = None) -> None:
         self._impl_policies = []  # type: List[AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPResponseType]]
-        self._transport = sender
+        self._transport = transport
 
         for policy in (policies or []):
             if isinstance(policy, SansIOHTTPPolicy):

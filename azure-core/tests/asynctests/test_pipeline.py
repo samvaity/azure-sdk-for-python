@@ -26,7 +26,7 @@
 import sys
 
 from azure.core.pipeline.transport import (
-    _TransportRequest,
+    TransportRequest,
 )
 
 # TODO: copy these?
@@ -44,6 +44,7 @@ from azure.core.pipeline.transport.async_abc import (
 
 from azure.core.configuration import Configuration
 from azure.core.pipeline.transport.aiohttp import AioHttpTransport
+from azure.core.pipeline.transport.async_requests import AsyncioRequestsTransport, TrioRequestsTransport
 from azure.core.pipeline.policies.universal import UserAgentPolicy
 
 import trio
@@ -63,7 +64,7 @@ async def test_sans_io_exception():
 
     pipeline = AsyncPipeline(BrokenSender(), [SansIOHTTPPolicy()])
 
-    req = _TransportRequest('GET', '/')
+    req = TransportRequest('GET', '/')
     with pytest.raises(ValueError):
         await pipeline.run(req)
 
@@ -81,53 +82,50 @@ async def test_sans_io_exception():
 async def test_basic_aiohttp():
 
     conf = Configuration()
-    request = _TransportRequest("GET", "http://bing.com")
+    request = TransportRequest("GET", "http://bing.com")
     policies = [
         UserAgentPolicy("myusergant")
     ]
-    async with AsyncPipeline(AioHttpTransport(conf), policies) as pipeline:
+    async with AsyncPipeline(AioHttpTransport(conf), policies=policies) as pipeline:
         response = await pipeline.run(request)
 
-    assert pipeline._transport._session.closed
+    assert pipeline._transport.session.closed
     assert response.http_response.status_code == 200
 
-@pytest.mark.skip("TODO: need AsyncPipelineRequestsHTTPSender")
 @pytest.mark.asyncio
 async def test_basic_async_requests():
 
-    request = _TransportRequest("GET", "http://bing.com")
+    request = TransportRequest("GET", "http://bing.com")
     policies = [
         UserAgentPolicy("myusergant")
     ]
-    async with AsyncPipeline(AsyncPipelineRequestsHTTPSender(), policies) as pipeline:
+    async with AsyncPipeline(AsyncioRequestsTransport(), policies=policies) as pipeline:
         response = await pipeline.run(request)
 
     assert response.http_response.status_code == 200
 
-@pytest.mark.skip("TODO: need AsyncPipelineRequestsHTTPSender and AsyncRequestsHTTPSender")
 @pytest.mark.asyncio
 async def test_conf_async_requests():
 
-    conf = Configuration("http://bing.com/")
-    request = _TransportRequest("GET", "http://bing.com/")
+    conf = Configuration()
+    request = TransportRequest("GET", "http://bing.com/")
     policies = [
         UserAgentPolicy("myusergant")
     ]
-    async with AsyncPipeline(AsyncPipelineRequestsHTTPSender(AsyncRequestsHTTPSender(conf)), policies) as pipeline:
+    async with AsyncPipeline(AsyncioRequestsTransport(conf), policies=policies) as pipeline:
         response = await pipeline.run(request)
 
     assert response.http_response.status_code == 200
 
-@pytest.mark.skip("TODO: need AsyncPipelineRequestsHTTPSender and AsyncTrioRequestsHTTPSender")
 def test_conf_async_trio_requests():
 
     async def do():
-        conf = Configuration("http://bing.com/")
-        request = _TransportRequest("GET", "http://bing.com/")
+        conf = Configuration()
+        request = TransportRequest("GET", "http://bing.com/")
         policies = [
             UserAgentPolicy("myusergant")
         ]
-        async with AsyncPipeline(AsyncPipelineRequestsHTTPSender(AsyncTrioRequestsHTTPSender(conf)), policies) as pipeline:
+        async with AsyncPipeline(TrioRequestsTransport(conf), policies=policies) as pipeline:
             return await pipeline.run(request)
 
     response = trio.run(do)

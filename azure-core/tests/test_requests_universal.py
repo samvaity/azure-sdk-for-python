@@ -27,7 +27,7 @@ import concurrent.futures
 import pytest
 from requests.adapters import HTTPAdapter
 
-from azure.core.pipeline.transport import _TransportRequest
+from azure.core.pipeline.transport import TransportRequest
 from azure.core.configuration import Configuration
 from azure.core.pipeline.transport.requests import RequestsTransport
 
@@ -48,7 +48,7 @@ def test_session_callback():
 
         cfg.session_configuration_callback = callback
 
-        request = _TransportRequest("GET", "http://127.0.0.1/")
+        request = TransportRequest("GET", "http://127.0.0.1/")
         output_kwargs = driver._configure_send(request, **{"test": True})
         assert output_kwargs["used_callback"]
 
@@ -61,7 +61,7 @@ def test_max_retries_on_default_adapter():
     max_retries = cfg.retry_count_total
 
     with RequestsTransport(cfg) as driver:
-        request = _TransportRequest("GET", "/")
+        request = TransportRequest("GET", "/")
         driver.session.mount('"http://127.0.0.1/"', HTTPAdapter())
 
         driver._configure_send(request)
@@ -73,39 +73,15 @@ def test_max_retries_on_default_adapter():
         )
 
 
-@pytest.mark.skip("TODO: Delete this? BasicRequestsHTTPSender isn't thread-safe and so isn't recommended")
 def test_threading_basic_requests():
     # Basic should have the session for all threads, it's why it's not recommended
-    sender = BasicRequestsHTTPSender()
+    sender = RequestsTransport()
     main_thread_session = sender.session
 
     def thread_body(local_sender):
         # Should be the same session
-        assert local_sender.session is main_thread_session
-
-        return True
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(thread_body, sender)
-        assert future.result()
-
-
-@pytest.mark.skip("TODO: redirection is now a policy, not part of session")
-def test_threading_cfg_requests():
-    cfg = Configuration()
-
-    # The one with conf however, should have one session per thread automatically
-    sender = RequestsTransport(cfg)
-    main_thread_session = sender.session
-
-    # Check that this main session is patched
-    assert main_thread_session.resolve_redirects.is_msrest_patched
-
-    def thread_body(local_sender):
-        # Should have it's own session
         assert local_sender.session is not main_thread_session
-        # But should be patched as the main thread session
-        assert local_sender.session.resolve_redirects.is_msrest_patched
+
         return True
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:

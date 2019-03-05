@@ -27,8 +27,8 @@ from typing import Any, Callable, AsyncIterator, Optional
 
 import aiohttp
 
-from . import _TransportRequest
-from .async_abc import AsyncHTTPSender, _AsyncTransportResponse
+from . import TransportRequest
+from .async_abc import AsyncHTTPSender, AsyncTransportResponse
 
 # Matching requests, because why not?
 CONTENT_CHUNK_SIZE = 10 * 1024
@@ -43,17 +43,17 @@ class AioHttpTransport(AsyncHTTPSender):
     """AioHttp HTTP sender implementation.
     """
 
-    def __init__(self, configuration, *, loop=None):
-        self._session = aiohttp.ClientSession(loop=loop)
+    def __init__(self, configuration=None, *, loop=None):
+        self.session = aiohttp.ClientSession(loop=loop)
         self.config = configuration
-        self._init_session(self._session)
+        self._init_session(self.session)
 
     async def __aenter__(self):
-        await self._session.__aenter__()
+        await self.session.__aenter__()
         return self
 
     async def __aexit__(self, *exc_details):  # pylint: disable=arguments-differ
-        await self._session.__aexit__(*exc_details)
+        await self.session.__aexit__(*exc_details)
 
     def _init_session(self, session):
         pass  # configure sesison
@@ -61,16 +61,16 @@ class AioHttpTransport(AsyncHTTPSender):
     def build_context(self):
         # type: () -> RequestsContext
         return AioHttpContext(
-            session=self._session,
+            session=self.session,
         )
 
-    async def send(self, request: _TransportRequest, **config: Any) -> _AsyncTransportResponse:
+    async def send(self, request: TransportRequest, **config: Any) -> AsyncTransportResponse:
         """Send the request using this HTTP sender.
 
         Will pre-load the body into memory to be available with a sync method.
         pass stream=True to avoid this behavior.
         """
-        result = await self._session.request(
+        result = await self.session.request(
             request.method,
             request.url,
             **config
@@ -81,9 +81,9 @@ class AioHttpTransport(AsyncHTTPSender):
         return response
 
 
-class AioHttpTransportResponse(_AsyncTransportResponse):
+class AioHttpTransportResponse(AsyncTransportResponse):
 
-    def __init__(self, request: _TransportRequest, aiohttp_response: aiohttp.ClientResponse) -> None:
+    def __init__(self, request: TransportRequest, aiohttp_response: aiohttp.ClientResponse) -> None:
         super(AioHttpTransportResponse, self).__init__(request, aiohttp_response)
         # https://aiohttp.readthedocs.io/en/stable/client_reference.html#aiohttp.ClientResponse
         self.status_code = aiohttp_response.status

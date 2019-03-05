@@ -54,9 +54,8 @@ from azure.core.exceptions import (
     ClientRequestError,
     raise_with_traceback
 )
-from .. import Request, Response
-from ..transport import _TransportRequest, HTTPSender
-from ..transport.requests import RequestsTransport
+from azure.core.pipeline.transport import TransportRequest, HTTPSender
+from azure.core.pipeline.transport.requests import RequestsTransport
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -121,7 +120,7 @@ class UserAgentPolicy(SansIOHTTPPolicy):
             http_request.headers[self._USERAGENT] = self._user_agent
 
 
-class HTTPLogger(SansIOHTTPPolicy):
+class NetworkTraceLoggingPolicy(SansIOHTTPPolicy):
     """A policy that logs HTTP request and response to the DEBUG logger.
 
     This accepts both global configuration, and kwargs request level with "enable_http_logger"
@@ -142,7 +141,7 @@ class HTTPLogger(SansIOHTTPPolicy):
             log_response(None, http_request, response.http_response, result=response)
 
 
-class RawDeserializer(SansIOHTTPPolicy):
+class ContentDecodePolicy(SansIOHTTPPolicy):
 
     # TODO: Discuss concept of mandatory pipeline policy.
     # What impact will this have on constructing custom pipelines.

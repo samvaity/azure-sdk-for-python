@@ -35,7 +35,7 @@ def get_pipeline(self, credentials, configuration=None, transport=None, **kwargs
     policies = [
         UserAgentPolicy(configuration.user_agent, configuration.user_agent_overwrite),  # UserAgent policy
         credentials,
-        HTTPLogger(enable_http_logger=configuration.logging_enable)  # HTTP request/response log
+        NetworkTraceLoggingPolicy(enable_http_logger=configuration.logging_enable)  # HTTP request/response log
     ]  # type: List[Union[HTTPPolicy, SansIOHTTPPolicy]]
 
     return Pipeline(
