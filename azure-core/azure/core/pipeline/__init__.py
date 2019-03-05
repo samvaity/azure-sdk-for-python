@@ -97,6 +97,6 @@ try:
     from .base_async import AsyncPipeline
     __all__.append('AsyncPipeline')
 except (SyntaxError, ImportError):
-    raise  # Asynchronous pipelines not supported.
+    pass  # Asynchronous pipelines not supported.
 
 

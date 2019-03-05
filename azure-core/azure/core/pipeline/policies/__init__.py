@@ -57,4 +57,4 @@ try:
         'AsyncCredentialsPolicy',
     ])
 except (ImportError, SyntaxError):
-    raise  # Async not supported
+    pass  # Async not supported
