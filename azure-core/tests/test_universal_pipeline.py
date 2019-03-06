@@ -64,7 +64,7 @@ def test_user_agent():
 def test_no_log(mock_http_logger):
     universal_request = TransportRequest('GET', 'http://127.0.0.1/')
     request = Request(universal_request)
-    http_logger = NetworkTraceLoggingPolicy(Configuration())
+    http_logger = NetworkTraceLoggingPolicy()
     response = Response(request, TransportResponse(universal_request, None))
 
     # By default, no log handler for HTTP
