@@ -38,6 +38,9 @@ import requests_oauthlib as oauth
 # - Will still likely keep "service-specific" credentials implementations, e.g. CogServices.
 
 
+
+# Remove in favor of specific credentials policies.
+
 class Authentication(object):
     """Default, simple auth object.
     Doesn't actually add any auth headers.

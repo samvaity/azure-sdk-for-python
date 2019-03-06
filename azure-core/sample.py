@@ -16,40 +16,44 @@ from azure.core.pipeline.transport.requests import RequestsTransport
 
 
 # Customer
-my_config = Configuration(redirect_allow=True, redirect_max=30)
 credentials = CognitiveServicesCredentials("foobar")
 
-config = FooServiceClient.get_config()
+config = FooServiceClient.create_foo_config()
 config.retry_policy.total_count = 10
 config.retry_policy = MyRetryPolicy(total_count=10) # RetryPolicy.NO_RETRIES
+
+client = FooServiceClient(creds, config)
 
 
 # SDK Dev
 class FooServiceClient():
 
     @staticmethod
-    def create_config():
-        config = Configuration()
-        config.add_policies([
-            UserAgentPolicy("ServiceUserAgentValue", config=my_config),
-            HeadersPolicy({"CustomHeader": "Value"}, config=my_config)
-            CredentialsPolicy(credentials, config=my_config),
-            ContentDecodePolicy(config=my_config),
-            RedirectPolicy(config=my_config),
-            RetryPolicy(config=my_config),
-            NetworkTraceLoggingPolicy(config=my_config),
-        ])
+    def create_foo_config(**kwargs):
+        config = Configuration(**kwargs)
+        config.user_agent = UserAgentPolicy("ServiceUserAgentValue", **kwargs)
+        config.headers = HeadersPolicy({"CustomHeader": "Value"})
+        config.retry = RetryPolicy(**kwargs)
+        config.redirect = RedirectPolicy(**kwargs)
 
-    def __init__(self, config=None, transport=None):
-        config = config or FooServiceClient.create_config()
-        transport = AsycioRequestsTransport(config)  # TrioRequests, Aiohttp
-        self.pipeline = Pipeline(transport, policies=config.get_policies())
+    def __init__(self, credentials, config=None, transport=None):
+        config = config or FooServiceClient.create_foo_config()
+        transport = RequestsTransport(config)  # TrioRequests, Aiohttp
+        policies = [
+            config.user_agent,
+            config.headers,
+            credentials,
+            ContentDecodePolicy(),
+            config.redirect,
+            config.retry,
+            config.logging,
+        ]
+        self._pipeline = Pipeline(transport, policies=policies)
 
     def get_request(self, **kwargs)
-        with pipeline:
-            new_request = TransportRequest("GET", "/")
-            response = pipeline.run(new_request, retry_count_total=10)
-            # deserialize response data
+        new_request = TransportRequest("GET", "/")
+        response = self._pipeline.run(new_request, **kwargs)
+        # deserialize response data
 
 
 ## Notes:

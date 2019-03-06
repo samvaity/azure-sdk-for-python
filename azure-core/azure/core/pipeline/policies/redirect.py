@@ -44,10 +44,11 @@ from azure.core.exceptions import (
     TokenInvalidError,
     AuthenticationError,
     ClientRequestError,
+    MaxRedirectError,
     raise_with_traceback
 )
 
-from azure.core.pipeline.policies import HTTPPolicy
+from .base import HTTPPolicy, RequestHistory
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -55,5 +56,64 @@ _LOGGER = logging.getLogger(__name__)
 
 class RedirectPolicy(HTTPPolicy):
 
+    REDIRECT_STATUSES = [301, 302, 303, 307, 308]
+
+    REDIRECT_HEADERS_BLACKLIST = frozenset(['Authorization'])
+
+    def __init__(self, **kwargs):
+        self.redirect_max = kwargs.pop('redirect_max', 30)
+        remove_headers = kwargs.pop('redirect_remove_headers', [])
+        self.remove_headers_on_redirect = set(remove_headers + self.REDIRECT_HEADERS_BLACKLIST)
+        redirect_status = kwargs.pop('redirect_on_status_codes', [])
+        self.redirect_on_status_codes = set(redirect_status + self.REDIRECT_STATUSES)
+        self.raise_on_redirect = True
+        self.history = []
+
+    @classmethod
+    def no_redirects(cls):
+        return cls(redirect_max=0)
+
+    def get_redirect_location(self, response):
+        """
+        Should we redirect and where to?
+        :returns: Truthy redirect location string if we got a redirect status
+            code and valid location. ``None`` if redirect status and no
+            location. ``False`` if not a redirect status code.
+        """
+        if response.http_response.status_code in self.redirect_on_status_codes:
+            return self.headers.get('location')
+
+        return False
+
+    def increment(self, response):
+        """ Return a new Retry object with incremented retry counters.
+
+        :param response: A response object, or None, if the server did not
+            return a response.
+        :type response: :class:`~urllib3.response.HTTPResponse`
+        :param Exception error: An error encountered during the request, or
+            None if the response was received successfully.
+
+        :return: A new ``Retry`` object.
+        """
+        # Redirect retry?
+        if redirect is not None:
+            redirect -= 1
+        cause = 'too many redirects'
+        redirect_location = response.get_redirect_location()
+        status = response.status
+        self.history.append(RequestHistory(response.http_request, http_response=response.http_response))
+
+        return self.redirect_max > 0
+
     def send(self, request, **kwargs):
-        return self.next.send(request, **kwargs)
+        retryable = True
+        while retryable:
+            response = self.next.send(request, **kwargs)
+            if self.get_redirect_location(response):
+                retryable = self.increment(response=response)
+                continue
+            response.history = self.history
+            return response
+
+        raise MaxRedirectError(retry_history=self.history)

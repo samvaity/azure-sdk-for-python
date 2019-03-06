@@ -45,5 +45,9 @@ from .requests import RequestsContext
 
 class AsyncRedirectPolicy(AsyncHTTPPolicy):
 
+    def __init__(self, **kwargs):
+        self.redirect_allow = kwargs.pop('redirect_allow', True)
+        self.redirect_max = kwargs.pop('redirect_max', 30)
+
     async def send(self, request, **kwargs):
         return await self.next.send(request, **kwargs)

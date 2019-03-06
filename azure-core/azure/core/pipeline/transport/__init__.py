@@ -24,11 +24,12 @@
 #
 # --------------------------------------------------------------------------
 
-from .base import HTTPSender, TransportRequest, TransportResponse
+from .base import HTTPSender, TransportRequest, TransportResponse, TransportConfiguration
 from .requests import RequestsTransport, RequestsTransportResponse, RequestsContext
 
 __all__ = [
     'HTTPSender',
+    'TransportConfiguration',
     'TransportRequest',
     'TransportResponse',
     'RequestsTransport',

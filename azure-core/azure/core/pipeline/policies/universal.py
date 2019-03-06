@@ -64,10 +64,9 @@ class HeadersPolicy(SansIOHTTPPolicy):
 
     This overwrite any headers already defined in the request.
     """
-    def __init__(self, headers, config):
+    def __init__(self, headers, **kwargs):
         # type: (Mapping[str, str]) -> None
-        self.headers = config.headers
-        self.headers.update(headers)
+        self.headers = headers or {}
 
     def on_request(self, request, **kwargs):
         # type: (Request, Any) -> None
@@ -79,34 +78,30 @@ class UserAgentPolicy(SansIOHTTPPolicy):
     _USERAGENT = "User-Agent"
     _ENV_ADDITIONAL_USER_AGENT = 'AZURE_HTTP_USER_AGENT'
 
-    def __init__(self, user_agent, config=None):  # TODO: Confirm overwrite behaviour
+    def __init__(self, base_user_agent=None, **kwargs):
         # type: (Optional[str], bool) -> None
-        if user_agent is None:
+        self.overwrite = kwargs.pop('user_agent_overwrite', False)
+        self.use_env = kwargs.pop('user_agent_use_env', True)
+
+        if base_user_agent is None:
             self._user_agent = "python/{} ({}) azure-core/{}".format(
                 platform.python_version(),
                 platform.platform(),
                 azcore_version
             )
         else:
-            self._user_agent = user_agent
-
-        if config:
-            self._overwrite = config.user_agent_overwrite
-            if config.user_agent:
-                self.add_user_agent(config.user_agent)
-        else:
-            self._overwrite = False
-
-        # Whether you gave me a header explicitly or not,
-        # if the env variable is set, add to it.
-        add_user_agent_header = os.environ.get(self._ENV_ADDITIONAL_USER_AGENT, None)
-        if add_user_agent_header is not None:
-            self.add_user_agent(add_user_agent_header)
+            self._user_agent = base_user_agent
+        
+        # TODO: Confirm whether overwrite was for customers or services.
 
     @property
     def user_agent(self):
         # type: () -> str
         """The current user agent value."""
+        if self.use_env:
+            add_user_agent_header = os.environ.get(self._ENV_ADDITIONAL_USER_AGENT, None)
+            if add_user_agent_header is not None:
+                return "{} {}".format(self._user_agent, add_user_agent_header)
         return self._user_agent
 
     def add_user_agent(self, value):
@@ -120,8 +115,8 @@ class UserAgentPolicy(SansIOHTTPPolicy):
     def on_request(self, request, **kwargs):
         # type: (Request, Any) -> None
         http_request = request.http_request
-        if self._overwrite or self._USERAGENT not in http_request.headers:
-            http_request.headers[self._USERAGENT] = self._user_agent
+        if self.overwrite or self._USERAGENT not in http_request.headers:
+            http_request.headers[self._USERAGENT] = self.user_agent
 
 
 class NetworkTraceLoggingPolicy(SansIOHTTPPolicy):
@@ -129,8 +124,8 @@ class NetworkTraceLoggingPolicy(SansIOHTTPPolicy):
 
     This accepts both global configuration, and kwargs request level with "enable_http_logger"
     """
-    def __init__(self, config):
-        self.enable_http_logger = config.logging_enable
+    def __init__(self, logging_enable=False, **kwargs):
+        self.enable_http_logger = logging_enable
 
     def on_request(self, request, **kwargs):
         # type: (Request, Any) -> None
@@ -303,3 +298,11 @@ class ContentDecodePolicy(SansIOHTTPPolicy):
             http_response.text(),
             http_response.headers
         )
+
+
+class ProxyPolicy(SansIOHTTPPolicy):
+
+    def __init__(self, proxies=None, **kwargs):
+        self.proxies = proxies
+        self.use_env_settings = kwargs.pop('proxies_use_env_settings', True)
+

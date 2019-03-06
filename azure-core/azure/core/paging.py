@@ -32,9 +32,6 @@ except ImportError:
 
 from typing import Dict, Any, List, Callable, Optional, TYPE_CHECKING  # pylint: disable=unused-import
 
-from .serialization import Deserializer
-#from .pipeline import ClientRawResponse # TODO: not yet copied
-
 if TYPE_CHECKING:
     from .pipeline.transport import TransportResponse  # pylint: disable=unused-import
     from .serialization import Model  # pylint: disable=unused-import
@@ -58,17 +55,16 @@ class Paged(AsyncPagedMixin, Iterator):
     _validation = {}  # type: Dict[str, Dict[str, Any]]
     _attribute_map = {}  # type: Dict[str, Dict[str, Any]]
 
-    def __init__(self, command, classes, raw_headers=None, **kwargs):
+    def __init__(self, command, derserializer, raw_headers=None, **kwargs):
         # type: (Callable[[str], TransportResponse], Dict[str, Model], Dict[str, str], Any) -> None
         super(Paged, self).__init__(**kwargs)  # type: ignore
         # Sets next_link, current_page, and _current_page_iter_index.
         self.next_link = ""
         self._current_page_iter_index = 0
-        self.reset()
-        self._derserializer = Deserializer(classes)
+        self._reset()
+        self._derserializer = derserializer
         self._get_next = command
         self._response = None  # type: Optional[TransportResponse]
-        self._raw_headers = raw_headers
 
     def __iter__(self):
         """Return 'self'."""
@@ -81,40 +77,14 @@ class Paged(AsyncPagedMixin, Iterator):
         """Required for parity to Model object for deserialization."""
         return {}
 
-    # TODO: haven't copied ClientRawResponse and this isn't used anywhere yet
-    # @property
-    # def raw(self):
-    #     # type: () -> ClientRawResponse
-    #     """Get current page as ClientRawResponse.
-
-    #     :rtype: ClientRawResponse
-    #     """
-    #     raw = ClientRawResponse(self.current_page, self._response)
-    #     if self._raw_headers:
-    #         raw.add_headers(self._raw_headers)
-    #     return raw
-
-    def get(self, url):
-        # type: (str) -> List[Model]
-        """Get an arbitrary page.
-
-        This resets the iterator and then fully consumes it to return the
-        specific page **only**.
-
-        :param str url: URL to arbitrary page results.
-        """
-        self.reset()
-        self.next_link = url
-        return self.advance_page()
-
-    def reset(self):
+    def _reset(self):
         # type: () -> None
         """Reset iterator to first page."""
         self.next_link = ""
         self.current_page = []  # type: List[Model]
         self._current_page_iter_index = 0
 
-    def advance_page(self):
+    def _advance_page(self):
         # type: () -> List[Model]
         """Force moving the cursor to the next azure call.
 
@@ -141,7 +111,20 @@ class Paged(AsyncPagedMixin, Iterator):
             self._current_page_iter_index += 1
             return response
         else:
-            self.advance_page()
+            self._advance_page()
             return self.__next__()
 
     next = __next__  # Python 2 compatibility.
+
+    def get(self, url):
+        # type: (str) -> List[Model]
+        """Get an arbitrary page.
+
+        This resets the iterator and then fully consumes it to return the
+        specific page **only**.
+
+        :param str url: URL to arbitrary page results.
+        """
+        self._reset()
+        self.next_link = url
+        return self._advance_page()

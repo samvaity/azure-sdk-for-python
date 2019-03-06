@@ -164,15 +164,7 @@ class RequestsTransport(HTTPSender):
                 request.method,
                 request.url,
                 **kwargs)
-        except oauth2.rfc6749.errors.InvalidGrantError as err:
-            msg = "Token is invalid."
-            raise_with_traceback(TokenInvalidError, msg, err)
-        except oauth2.rfc6749.errors.TokenExpiredError as err:
-            msg = "Token has expired."
-            raise_with_traceback(TokenExpiredError, msg, err)
-        except oauth2.rfc6749.errors.OAuth2Error as err:
-            msg = "Authentication error occurred in request."
-            raise_with_traceback(AuthenticationError, msg, err)
+
         except requests.RequestException as err:
             msg = "Error occurred in request."
             raise_with_traceback(ClientRequestError, msg, err)

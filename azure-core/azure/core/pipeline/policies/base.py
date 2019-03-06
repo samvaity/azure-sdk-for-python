@@ -40,7 +40,7 @@ _LOGGER = logging.getLogger(__name__)
 class HTTPPolicy(ABC, Generic[HTTPRequestType, HTTPResponseType]):
     """An http policy ABC.
     """
-    def __init__(self, config=None):
+    def __init__(self):
         self.next = None
 
     @abc.abstractmethod
@@ -98,3 +98,12 @@ class SansIOHTTPPolicy(Generic[HTTPRequestType, HTTPResponseType]):
             exc_type, exc_value, exc_traceback = sys.exc_info()
         """
         return False
+
+
+class RequestHistory(object):
+ 
+    def __init__(self, http_request, http_response=None, error=None, context=None):
+        # type: (Request[HTTPRequestType], Exception, Optional[Dict[str, Any]]) -> None
+        self.http_request = http_request
+        self.http_response = http_response
+        self.error = error
