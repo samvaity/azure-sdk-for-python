@@ -62,10 +62,10 @@ def test_user_agent():
 
 @mock.patch('azure.core.pipeline.policies.universal._LOGGER')
 def test_no_log(mock_http_logger):
-    universal_request = TransportRequest('GET', 'http://127.0.0.1/')
-    request = Request(universal_request)
+    universal_request = HttpRequest('GET', 'http://127.0.0.1/')
+    request = PipelineRequest(universal_request)
     http_logger = NetworkTraceLoggingPolicy()
-    response = Response(request, TransportResponse(universal_request, None))
+    response = PipelineResponse(request, HttpResponse(universal_request, None))
 
     # By default, no log handler for HTTP
     http_logger.on_request(request)

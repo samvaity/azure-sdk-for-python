@@ -112,7 +112,7 @@ class TrioRequestsTransport(RequestsTransport, AsyncHTTPSender):  # type: ignore
             limiter=trio_limiter
         )
         try:
-            return TrioRequestsHttpResponse(
+            return TrioRequestsTransportResponse(
                 request,
                 await future
             )
