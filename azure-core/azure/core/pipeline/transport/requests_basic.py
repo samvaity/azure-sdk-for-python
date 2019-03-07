@@ -28,7 +28,6 @@ import contextlib
 import requests
 import threading
 
-from oauthlib import oauth2
 from .base import (
     HttpTransport,
     HttpResponse,

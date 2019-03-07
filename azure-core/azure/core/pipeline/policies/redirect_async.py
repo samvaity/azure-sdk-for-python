@@ -29,15 +29,6 @@ import functools
 import logging
 from typing import Any, Callable, Optional, AsyncIterator as AsyncIteratorType
 
-from oauthlib import oauth2
-import requests
-from requests.models import CONTENT_CHUNK_SIZE
-
-from ..exceptions import (
-    TokenExpiredError,
-    ClientRequestError,
-    raise_with_traceback
-)
 from . import AsyncHTTPPolicy
 
 

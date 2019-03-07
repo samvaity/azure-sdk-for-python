@@ -37,10 +37,6 @@ from typing import TYPE_CHECKING, cast, List, Callable, Iterator, Any, Union, Di
 import xml.etree.ElementTree as ET
 import warnings
 
-from oauthlib import oauth2
-import requests
-from requests.models import CONTENT_CHUNK_SIZE
-
 from azure.core import __version__  as azcore_version
 from .base import HTTPPolicy, SansIOHTTPPolicy
 from urllib3 import Retry  # Needs requests 2.16 at least to be safe

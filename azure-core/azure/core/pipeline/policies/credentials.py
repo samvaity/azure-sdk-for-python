@@ -33,7 +33,6 @@ import threading
 from typing import TYPE_CHECKING, List, Callable, Iterator, Any, Union, Dict, Optional  # pylint: disable=unused-import
 import warnings
 
-from oauthlib import oauth2
 import requests
 from requests.models import CONTENT_CHUNK_SIZE
 
@@ -54,8 +53,8 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class CredentialsPolicy(HTTPPolicy):
-    """Implementation of request-oauthlib except and retry logic.
-    """
+    # TODO: This is deprecated: Need to remove
+
     def __init__(self, credentials, config=None):
         super(CredentialsPolicy, self).__init__()
         self._credentials = credentials

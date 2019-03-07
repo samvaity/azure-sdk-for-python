@@ -78,7 +78,6 @@ setup(
     ]),
     install_requires=[
         "requests~=2.16",
-        "isodate>=0.6.0",
         "certifi>=2017.4.17",
     ],
     extras_require={

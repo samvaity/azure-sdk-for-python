@@ -33,12 +33,6 @@ import threading
 from typing import TYPE_CHECKING, List, Callable, Iterator, Any, Union, Dict, Optional  # pylint: disable=unused-import
 import warnings
 
-from oauthlib import oauth2
-import requests
-from requests.models import CONTENT_CHUNK_SIZE
-
-from urllib3 import Retry  # Needs requests 2.16 at least to be safe
-
 from azure.core.exceptions import (
     TokenExpiredError,
     TokenInvalidError,
@@ -54,8 +48,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class RetryPolicy(HTTPPolicy):
-    """Implementation of request-oauthlib except and retry logic.
-    """
+
     RETRY_AFTER_STATUS_CODES = frozenset([413, 429, 503])
 
     #: Maximum backoff time.

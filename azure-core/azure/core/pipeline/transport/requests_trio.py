@@ -29,7 +29,6 @@ import functools
 import logging
 from typing import Any, Callable, Optional, AsyncIterator as AsyncIteratorType
 
-from oauthlib import oauth2
 import requests
 from requests.models import CONTENT_CHUNK_SIZE
 

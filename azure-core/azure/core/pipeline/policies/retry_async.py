@@ -33,12 +33,6 @@ import threading
 from typing import TYPE_CHECKING, List, Callable, Iterator, Any, Union, Dict, Optional  # pylint: disable=unused-import
 import warnings
 
-from oauthlib import oauth2
-import requests
-from requests.models import CONTENT_CHUNK_SIZE
-
-from urllib3 import Retry  # Needs requests 2.16 at least to be safe
-
 from ..exceptions import (
     TokenExpiredError,
     TokenInvalidError,
@@ -55,8 +49,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class AsyncRetryPolicy(AsyncHTTPPolicy):
-    """Implementation of request-oauthlib except and retry logic.
-    """
+
     DEFAULT_METHOD_WHITELIST = frozenset([
         'HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE'])
 
