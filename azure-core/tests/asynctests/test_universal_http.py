@@ -28,7 +28,7 @@ import sys
 from azure.core.pipeline.transport import (
     HttpRequest,
     AioHttpTransport,
-    AsyncHTTPSender,
+    AsyncHttpTransport,
     AsyncioRequestsTransport,
     TrioRequestsTransport)
 

@@ -34,7 +34,7 @@ import requests
 from requests.models import CONTENT_CHUNK_SIZE
 
 from .base import HttpRequest
-from .base_async import AsyncHTTPSender, AsyncHttpResponse
+from .base_async import AsyncHttpTransport, AsyncHttpResponse
 from .requests import RequestsTransport, RequestsTransportResponse
 from .requests_asyncio import _ResponseStopIteration, _iterate_response_content
 from azure.core.exceptions import (
@@ -90,7 +90,7 @@ class TrioRequestsTransportResponse(AsyncHttpResponse, RequestsTransportResponse
         )
 
 
-class TrioRequestsTransport(RequestsTransport, AsyncHTTPSender):  # type: ignore
+class TrioRequestsTransport(RequestsTransport, AsyncHttpTransport):  # type: ignore
 
     async def __aenter__(self):
         return super(TrioRequestsTransport, self).__enter__()

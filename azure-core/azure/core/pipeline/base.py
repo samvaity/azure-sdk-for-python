@@ -67,7 +67,7 @@ class _SansIOHTTPPolicyRunner(HTTPPolicy, Generic[HTTPRequestType, HTTPResponseT
 class _TransportRunner(HTTPPolicy):
 
     def __init__(self, sender):
-        # type: (HTTPSender) -> None
+        # type: (HttpTransport) -> None
         super(_TransportRunner, self).__init__()
         self._sender = sender
 
@@ -86,7 +86,7 @@ class Pipeline(AbstractContextManager, Generic[HTTPRequestType, HTTPResponseType
     """
 
     def __init__(self, transport, policies=None):
-        # type: (HTTPSender, List[Union[HTTPPolicy, SansIOHTTPPolicy]]) -> None
+        # type: (HttpTransport, List[Union[HTTPPolicy, SansIOHTTPPolicy]]) -> None
         self._impl_policies = []  # type: List[HTTPPolicy]
         self._transport = transport  # type: HTTPPolicy
 

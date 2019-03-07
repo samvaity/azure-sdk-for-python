@@ -43,7 +43,7 @@ from azure.core.pipeline import Pipeline
 from azure.core.pipeline.policies.base import SansIOHTTPPolicy
 from azure.core.pipeline.transport import (
     HttpRequest,
-    HTTPSender
+    HttpTransport
     # ClientRawResponse, TODO: not yet copied from msrest
 )
 
@@ -51,7 +51,7 @@ from azure.core.configuration import Configuration
 
 
 def test_sans_io_exception():
-    class BrokenSender(HTTPSender):
+    class BrokenSender(HttpTransport):
         def send(self, request, **config):
             raise ValueError("Broken")
 

@@ -24,11 +24,11 @@
 #
 # --------------------------------------------------------------------------
 
-from .base import HTTPSender, HttpRequest, HttpResponse, TransportConfiguration
+from .base import HttpTransport, HttpRequest, HttpResponse, TransportConfiguration
 from .requests import RequestsTransport, RequestsTransportResponse, RequestsContext
 
 __all__ = [
-    'HTTPSender',
+    'HttpTransport',
     'TransportConfiguration',
     'HttpRequest',
     'HttpResponse',
@@ -38,10 +38,10 @@ __all__ = [
 ]
 
 try:
-    from .base_async import AsyncHTTPSender, AsyncHttpResponse
+    from .base_async import AsyncHttpTransport, AsyncHttpResponse
     from .requests_asyncio import AsyncioRequestsTransport, AsyncioRequestsTransportResponse
     __all__.extend([
-        'AsyncHTTPSender',
+        'AsyncHttpTransport',
         'AsyncHttpResponse',
         'AsyncioRequestsTransport',
         'AsyncioRequestsTransportResponse'

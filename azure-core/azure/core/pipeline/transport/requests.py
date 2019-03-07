@@ -30,9 +30,9 @@ import threading
 
 from oauthlib import oauth2
 from .base import (
+    HttpTransport,
     HttpResponse,
-    _HttpResponseBase,
-    HTTPSender
+    _HttpResponseBase
 )
 
 from azure.core.exceptions import (
@@ -91,7 +91,7 @@ class RequestsTransportResponse(_RequestsTransportResponseBase, HttpResponse):
                 yield chunk
 
 
-class RequestsTransport(HTTPSender):
+class RequestsTransport(HttpTransport):
     """Implements a basic requests HTTP sender.
 
     Since requests team recommends to use one session per requests, you should

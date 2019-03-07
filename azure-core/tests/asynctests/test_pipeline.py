@@ -29,7 +29,7 @@ from azure.core.configuration import Configuration
 from azure.core.pipeline import AsyncPipeline
 from azure.core.pipeline.policies import SansIOHTTPPolicy, UserAgentPolicy
 from azure.core.pipeline.transport import (
-    AsyncHTTPSender,
+    AsyncHttpTransport,
     HttpRequest,
     AsyncioRequestsTransport,
     TrioRequestsTransport,
@@ -43,7 +43,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_sans_io_exception():
-    class BrokenSender(AsyncHTTPSender):
+    class BrokenSender(AsyncHttpTransport):
         async def send(self, request, **config):
             raise ValueError("Broken")
 

@@ -75,7 +75,7 @@ class TransportConfiguration(object):
                 'cert': self.cert}
 
 
-class HTTPSender(AbstractContextManager, ABC, Generic[HTTPRequestType, HTTPResponseType]):
+class HttpTransport(AbstractContextManager, ABC, Generic[HTTPRequestType, HTTPResponseType]):
     """An http sender ABC.
     """
 

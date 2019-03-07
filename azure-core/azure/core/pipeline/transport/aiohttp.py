@@ -28,7 +28,7 @@ from typing import Any, Callable, AsyncIterator, Optional
 import aiohttp
 
 from .base import HttpRequest
-from .base_async import AsyncHTTPSender, AsyncHttpResponse
+from .base_async import AsyncHttpTransport, AsyncHttpResponse
 
 # Matching requests, because why not?
 CONTENT_CHUNK_SIZE = 10 * 1024
@@ -39,7 +39,7 @@ class AioHttpContext(object):
         self.session = session
 
 
-class AioHttpTransport(AsyncHTTPSender):
+class AioHttpTransport(AsyncHttpTransport):
     """AioHttp HTTP sender implementation.
     """
 

@@ -48,7 +48,7 @@ class HTTPPolicy(ABC, Generic[HTTPRequestType, HTTPResponseType]):
         # type: (PipelineRequest[HTTPRequestType], Any) -> PipelineResponse[HTTPRequestType, HTTPResponseType]
         """Mutate the request.
 
-        Context content is dependent of the HTTPSender.
+        Context content is dependent of the HttpTransport.
         """
         pass
 

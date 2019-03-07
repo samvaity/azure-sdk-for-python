@@ -34,7 +34,7 @@ import requests
 from requests.models import CONTENT_CHUNK_SIZE
 
 from .base import HttpRequest
-from .base_async import AsyncHTTPSender, AsyncHttpResponse
+from .base_async import AsyncHttpTransport, AsyncHttpResponse
 from .requests import RequestsTransport, RequestsTransportResponse
 from azure.core.exceptions import (
     TokenExpiredError,
@@ -55,7 +55,7 @@ def _get_running_loop():
         return loop
 
 
-class AsyncioRequestsTransport(RequestsTransport, AsyncHTTPSender):  # type: ignore
+class AsyncioRequestsTransport(RequestsTransport, AsyncHttpTransport):  # type: ignore
 
     async def __aenter__(self):
         return super(AsyncioRequestsTransport, self).__enter__()

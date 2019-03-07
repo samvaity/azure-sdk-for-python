@@ -63,7 +63,7 @@ class AsyncHttpResponse(_HttpResponseBase):
         pass
 
 
-class AsyncHTTPSender(AbstractAsyncContextManager, abc.ABC, Generic[HTTPRequestType, AsyncHTTPResponseType]):
+class AsyncHttpTransport(AbstractAsyncContextManager, abc.ABC, Generic[HTTPRequestType, AsyncHTTPResponseType]):
     """An http sender ABC.
     """
 
