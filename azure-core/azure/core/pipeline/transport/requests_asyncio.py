@@ -35,7 +35,7 @@ from requests.models import CONTENT_CHUNK_SIZE
 
 from .base import HttpRequest
 from .base_async import AsyncHttpTransport, AsyncHttpResponse
-from .requests import RequestsTransport, RequestsTransportResponse
+from .requests_basic import RequestsTransport, RequestsTransportResponse
 from azure.core.exceptions import (
     TokenExpiredError,
     ClientRequestError,

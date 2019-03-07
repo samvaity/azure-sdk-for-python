@@ -29,7 +29,7 @@ from requests.adapters import HTTPAdapter
 
 from azure.core.pipeline.transport import HttpRequest
 from azure.core.configuration import Configuration
-from azure.core.pipeline.transport.requests import RequestsTransport
+from azure.core.pipeline.transport import RequestsTransport
 
 
 @pytest.mark.skip("TODO: configures requests via RequestsTransport._configure_send")

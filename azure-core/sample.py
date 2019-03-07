@@ -11,8 +11,7 @@ from azure.core.pipeline.policies import (
     RetryPolicy,
     RedirectPolicy
 )
-from azure.core.pipeline.transport import HttpRequest
-from azure.core.pipeline.transport.requests import RequestsTransport
+from azure.core.pipeline.transport import HttpRequest, RequestsTransport
 
 
 # Customer

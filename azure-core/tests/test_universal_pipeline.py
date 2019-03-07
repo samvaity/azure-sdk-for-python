@@ -42,7 +42,7 @@ from azure.core.pipeline.transport import (
     HttpRequest,
     HttpResponse,
 )
-from azure.core.pipeline.transport.requests import RequestsTransportResponse
+from azure.core.pipeline.transport import RequestsTransportResponse
 
 from azure.core.pipeline.policies.universal import (
     NetworkTraceLoggingPolicy,

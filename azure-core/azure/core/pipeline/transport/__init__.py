@@ -25,7 +25,7 @@
 # --------------------------------------------------------------------------
 
 from .base import HttpTransport, HttpRequest, HttpResponse, TransportConfiguration
-from .requests import RequestsTransport, RequestsTransportResponse, RequestsContext
+from .requests_basic import RequestsTransport, RequestsTransportResponse, RequestsContext
 
 __all__ = [
     'HttpTransport',
