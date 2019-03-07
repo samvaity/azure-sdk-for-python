@@ -284,9 +284,71 @@ The Python pipeline implementation provides two flavors of policy. These are ref
 
 #### SansIOHTTPPolicy
 
+If a policy just modifies or annotate the request based on the HTTP specification, it's then a subclass of SansIOHTTPPolicy and will work in either Pipeline or AsyncPipeline context.
+This is a simple abstract class, that can act before the request is done, or act after. For instance:
 
+- Setting headers in the request
+- Logging the request in and the response out
 
+A SansIOHTTPPolicy should implement one or more of the following methods:
+```python
+def on_request(self, request, **kwargs):
+    """Is executed before sending the request to next policy."""
 
+def on_response(self, request, response, **kwargs):
+    """Is executed after the request comes back from the policy."""
 
+def on_exception(self, request, **kwargs):
+    """Is executed if an exception comes back fron the following
+    policy.
+    Return True if the exception has been handled and should not
+    be forwarded to the caller.
+    """
+```
 
+Current provided sans IO policies include:
+```python
+from azure.core.pipeline.policies import (
+    HeadersPolicy,  # Add custom headers to all requests
+    UserAgentPolicy,  # Add a custom user agent header
+    NetworkTraceLoggingPolicy,  # Log request and response contents
+    ContentDecodePolicy,  # Mandatory policy for decoding unstreamed response content
+)
+```
 
+#### HTTPPolicy and AsyncHTTPPolicy
+
+Some policies are more complex, like retry strategy, and need to have control of the HTTP workflow.
+In the current version, they are subclasses of HTTPPolicy or AsyncHTTPPolicy, and can be used only their corresponding synchronous or asynchronous pipeline type.
+
+An HTTPPolicy or AsyncHTTPPolicy must implement the `send` method, and this implementation must in include a call to process the next policy in the pipeline:
+```python
+class CustomPolicy(HTTPPolicy):
+
+    def __init__(self):
+        self.next = None  # Will be set when pipeline is instantiated and all the policies chained.
+
+    def send(self, request, **kwargs):
+        """Mutate the request."""
+
+        return self.next.send(request, **kwargs)
+
+class CustomAsyncPolicy(AsyncHTTPPolicy):
+
+    async def send(self, request, **kwargs):
+        """Mutate the request."""
+
+        return await self.next.send(request, **kwargs)
+```
+
+Currently provided HTTP policies include:
+```python
+from azure.core.pipeline.policies import (
+    CredentialsPolicy,
+    AsyncCredentialsPolicy,
+    RetryPolicy,
+    AsyncRetryPolicy.
+    RedirectPolicy,
+    AsyncRedirectPolicy
+)
+```
