@@ -33,8 +33,8 @@ from oauthlib import oauth2
 import requests
 from requests.models import CONTENT_CHUNK_SIZE
 
-from .base import TransportRequest
-from .base_async import AsyncHTTPSender, AsyncTransportResponse
+from .base import HttpRequest
+from .base_async import AsyncHTTPSender, AsyncHttpResponse
 from .requests import RequestsTransport, RequestsTransportResponse
 from azure.core.exceptions import (
     TokenExpiredError,
@@ -63,7 +63,7 @@ class AsyncioRequestsTransport(RequestsTransport, AsyncHTTPSender):  # type: ign
     async def __aexit__(self, *exc_details):  # pylint: disable=arguments-differ
         return super(AsyncioRequestsTransport, self).__exit__()
 
-    async def send(self, request: TransportRequest, **kwargs: Any) -> AsyncTransportResponse:  # type: ignore
+    async def send(self, request: HttpRequest, **kwargs: Any) -> AsyncHttpResponse:  # type: ignore
         """Send the request using this HTTP sender.
         """
         loop = kwargs.get("loop", _get_running_loop())
@@ -129,7 +129,7 @@ class AsyncioStreamDownloadGenerator(AsyncIterator):
             raise
 
 
-class AsyncioRequestsTransportResponse(AsyncTransportResponse, RequestsTransportResponse):
+class AsyncioRequestsTransportResponse(AsyncHttpResponse, RequestsTransportResponse):
 
     def stream_download(self, chunk_size: Optional[int] = None, callback: Optional[Callable] = None) -> AsyncIteratorType[bytes]:
         """Generator for streaming request body data.

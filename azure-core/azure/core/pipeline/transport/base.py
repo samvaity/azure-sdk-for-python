@@ -81,7 +81,7 @@ class HTTPSender(AbstractContextManager, ABC, Generic[HTTPRequestType, HTTPRespo
 
     @abc.abstractmethod
     def send(self, request, **config):
-        # type: (Request[HTTPRequestType], Any) -> Response[HTTPRequestType, HTTPResponseType]
+        # type: (PipelineRequest[HTTPRequestType], Any) -> PipelineResponse[HTTPRequestType, HTTPResponseType]
         """Send the request using this HTTP sender.
         """
         pass
@@ -97,7 +97,7 @@ class HTTPSender(AbstractContextManager, ABC, Generic[HTTPRequestType, HTTPRespo
         return None
 
 
-class TransportRequest(object):
+class HttpRequest(object):
     """Represents a HTTP request.
 
     URL can be given without query parameters, to be added later using "format_parameters".
@@ -122,7 +122,7 @@ class TransportRequest(object):
         self.data = data
 
     def __repr__(self):
-        return '<TransportRequest [%s]>' % (self.method)
+        return '<HttpRequest [%s]>' % (self.method)
 
     @property
     def body(self):
@@ -217,7 +217,7 @@ class TransportRequest(object):
             self.files = {f: self._format_data(d) for f, d in content.items() if d is not None}
 
 
-class _TransportResponseBase(object):
+class _HttpResponseBase(object):
     """Represent a HTTP response.
 
     No body is defined here on purpose, since async pipeline
@@ -225,7 +225,7 @@ class _TransportResponseBase(object):
     Full in-memory using "body" as bytes.
     """
     def __init__(self, request, internal_response):
-        # type: (TransportRequest, Any) -> None
+        # type: (HttpRequest, Any) -> None
         self.request = request
         self.internal_response = internal_response
         self.status_code = None  # type: Optional[int]
@@ -254,7 +254,7 @@ class _TransportResponseBase(object):
             raise ClientRequestError("Received status code {}".format(self.status_code))
 
 
-class TransportResponse(_TransportResponseBase):
+class HttpResponse(_HttpResponseBase):
 
 
     def stream_download(self, chunk_size=None, callback=None):

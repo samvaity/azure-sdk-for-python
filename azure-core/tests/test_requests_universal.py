@@ -27,7 +27,7 @@ import concurrent.futures
 import pytest
 from requests.adapters import HTTPAdapter
 
-from azure.core.pipeline.transport import TransportRequest
+from azure.core.pipeline.transport import HttpRequest
 from azure.core.configuration import Configuration
 from azure.core.pipeline.transport.requests import RequestsTransport
 
@@ -48,7 +48,7 @@ def test_session_callback():
 
         cfg.session_configuration_callback = callback
 
-        request = TransportRequest("GET", "http://127.0.0.1/")
+        request = HttpRequest("GET", "http://127.0.0.1/")
         output_kwargs = driver._configure_send(request, **{"test": True})
         assert output_kwargs["used_callback"]
 
@@ -61,7 +61,7 @@ def test_max_retries_on_default_adapter():
     max_retries = cfg.retry_count_total
 
     with RequestsTransport(cfg) as driver:
-        request = TransportRequest("GET", "/")
+        request = HttpRequest("GET", "/")
         driver.session.mount('"http://127.0.0.1/"', HTTPAdapter())
 
         driver._configure_send(request)

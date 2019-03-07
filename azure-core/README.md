@@ -51,7 +51,7 @@ class FooServiceClient():
         self._pipeline = Pipeline(transport, policies=policies)
 
     def get_request(self, **kwargs)
-        new_request = TransportRequest("GET", "/")
+        new_request = HttpRequest("GET", "/")
         response = self._pipeline.run(new_request, **kwargs)
         # deserialize response data
 ```

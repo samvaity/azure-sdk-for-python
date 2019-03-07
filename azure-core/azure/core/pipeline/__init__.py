@@ -45,7 +45,7 @@ except ImportError: # Python <= 3.5
             return None
 
 
-class Request(object):
+class PipelineRequest(object):
     """Represents a HTTP request in a Pipeline.
 
     URL can be given without query parameters, to be added later using "format_parameters".
@@ -67,10 +67,10 @@ class Request(object):
         self.context = context
 
 
-class Response(object):
+class PipelineResponse(object):
     """A pipeline response object.
 
-    The Response interface exposes an HTTP response object as it returns through the pipeline of Policy objects.
+    The PipelineResponse interface exposes an HTTP response object as it returns through the pipeline of Policy objects.
     This ensures that Policy objects have access to the HTTP response.
 
     This also have a "context" dictionnary where policy can put additional fields.
@@ -78,7 +78,7 @@ class Response(object):
     However, nothing prevents a policy to actually sub-class this class a return it instead of the initial instance.
     """
     def __init__(self, http_request, http_response, context=None):
-        # type: (Request[HTTPRequestType], HTTPResponseType, Optional[Dict[str, Any]]) -> None
+        # type: (HttpRequest[HTTPRequestType], HTTPResponseType, Optional[Dict[str, Any]]) -> None
         self.http_request = http_request
         self.http_response = http_response
         self.history = []
@@ -89,8 +89,8 @@ from .base import Pipeline
 
 __all__ = [
     'Pipeline',
-    'Request',
-    'Response'
+    'PipelineRequest',
+    'PipelineResponse'
 ]
 
 try:

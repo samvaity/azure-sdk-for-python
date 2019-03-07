@@ -30,7 +30,7 @@ from azure.core.pipeline import AsyncPipeline
 from azure.core.pipeline.policies import SansIOHTTPPolicy, UserAgentPolicy
 from azure.core.pipeline.transport import (
     AsyncHTTPSender,
-    TransportRequest,
+    HttpRequest,
     AsyncioRequestsTransport,
     TrioRequestsTransport,
     AioHttpTransport
@@ -53,7 +53,7 @@ async def test_sans_io_exception():
 
     pipeline = AsyncPipeline(BrokenSender(), [SansIOHTTPPolicy()])
 
-    req = TransportRequest('GET', '/')
+    req = HttpRequest('GET', '/')
     with pytest.raises(ValueError):
         await pipeline.run(req)
 
@@ -71,7 +71,7 @@ async def test_sans_io_exception():
 async def test_basic_aiohttp():
 
     conf = Configuration()
-    request = TransportRequest("GET", "http://bing.com")
+    request = HttpRequest("GET", "http://bing.com")
     policies = [
         UserAgentPolicy("myusergant")
     ]
@@ -84,7 +84,7 @@ async def test_basic_aiohttp():
 @pytest.mark.asyncio
 async def test_basic_async_requests():
 
-    request = TransportRequest("GET", "http://bing.com")
+    request = HttpRequest("GET", "http://bing.com")
     policies = [
         UserAgentPolicy("myusergant")
     ]
@@ -97,7 +97,7 @@ async def test_basic_async_requests():
 async def test_conf_async_requests():
 
     conf = Configuration()
-    request = TransportRequest("GET", "http://bing.com/")
+    request = HttpRequest("GET", "http://bing.com/")
     policies = [
         UserAgentPolicy("myusergant")
     ]
@@ -110,7 +110,7 @@ def test_conf_async_trio_requests():
 
     async def do():
         conf = Configuration()
-        request = TransportRequest("GET", "http://bing.com/")
+        request = HttpRequest("GET", "http://bing.com/")
         policies = [
             UserAgentPolicy("myusergant")
         ]

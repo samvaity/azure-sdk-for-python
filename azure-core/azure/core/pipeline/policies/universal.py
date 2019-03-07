@@ -69,7 +69,7 @@ class HeadersPolicy(SansIOHTTPPolicy):
         self.headers = headers or {}
 
     def on_request(self, request, **kwargs):
-        # type: (Request, Any) -> None
+        # type: (PipelineRequest, Any) -> None
         http_request = request.http_request
         http_request.headers.update(self.headers)
 
@@ -113,7 +113,7 @@ class UserAgentPolicy(SansIOHTTPPolicy):
         self._user_agent = "{} {}".format(self._user_agent, value)
 
     def on_request(self, request, **kwargs):
-        # type: (Request, Any) -> None
+        # type: (PipelineRequest, Any) -> None
         http_request = request.http_request
         if self.overwrite or self._USERAGENT not in http_request.headers:
             http_request.headers[self._USERAGENT] = self.user_agent
@@ -128,7 +128,7 @@ class NetworkTraceLoggingPolicy(SansIOHTTPPolicy):
         self.enable_http_logger = logging_enable
 
     def on_request(self, request, **kwargs):
-        # type: (Request, Any) -> None
+        # type: (PipelineRequest, Any) -> None
         http_request = request.http_request
         if kwargs.get("enable_http_logger", self.enable_http_logger):
             if not _LOGGER.isEnabledFor(logging.DEBUG):
@@ -153,7 +153,7 @@ class NetworkTraceLoggingPolicy(SansIOHTTPPolicy):
                 _LOGGER.debug("Failed to log request: %r", err)
 
     def on_response(self, request, response, **kwargs):
-        # type: (Request, Response, Any) -> None
+        # type: (PipelineRequest, PipelineResponse, Any) -> None
         if kwargs.get("enable_http_logger", self.enable_http_logger):
             if not _LOGGER.isEnabledFor(logging.DEBUG):
                 return
@@ -274,7 +274,7 @@ class ContentDecodePolicy(SansIOHTTPPolicy):
         return None
 
     def on_response(self, request, response, **kwargs):
-        # type: (Request, Response, Any) -> None
+        # type: (PipelineRequest, PipelineResponse, Any) -> None
         """Extract data from the body of a REST response object.
 
         This will load the entire payload in memory.

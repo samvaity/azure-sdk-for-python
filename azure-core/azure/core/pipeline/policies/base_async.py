@@ -28,7 +28,7 @@ import abc
 
 from typing import Generic, TypeVar, Any, List, Union, Callable, AsyncIterator, Optional
 
-from azure.core.pipeline import Request, Response
+from azure.core.pipeline import PipelineRequest, PipelineResponse
 
 try:
     from contextlib import AbstractAsyncContextManager  # type: ignore
@@ -57,7 +57,7 @@ class AsyncHTTPPolicy(abc.ABC, Generic[HTTPRequestType, AsyncHTTPResponseType]):
         self.next = None  # type: Optional[Union[AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPResponseType], AsyncHTTPSender[HTTPRequestType, AsyncHTTPResponseType]]]
 
     @abc.abstractmethod
-    async def send(self, request: Request, **kwargs: Any):
+    async def send(self, request: PipelineRequest, **kwargs: Any):
         """Mutate the request.
 
         Context content is dependent of the HTTPSender.

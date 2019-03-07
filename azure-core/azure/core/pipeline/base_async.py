@@ -28,7 +28,7 @@ import abc
 
 from typing import Any, List, Union, Callable, AsyncIterator, Optional, Generic, TypeVar
 
-from azure.core.pipeline import Request, Response, Pipeline
+from azure.core.pipeline import PipelineRequest, PipelineResponse, Pipeline
 from azure.core.pipeline.policies import AsyncHTTPPolicy, SansIOHTTPPolicy
 
 AsyncHTTPResponseType = TypeVar("AsyncHTTPResponseType")
@@ -57,7 +57,7 @@ class _SansIOAsyncHTTPPolicyRunner(AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPRes
         super(_SansIOAsyncHTTPPolicyRunner, self).__init__()
         self._policy = policy
 
-    async def send(self, request: Request, **kwargs: Any):
+    async def send(self, request: PipelineRequest, **kwargs: Any):
         self._policy.on_request(request, **kwargs)
         try:
             response = await self.next.send(request, **kwargs)  # type: ignore
@@ -76,7 +76,7 @@ class _AsyncTransportRunner(AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPResponseTy
         self._sender = sender
 
     async def send(self, request, **kwargs):
-        return Response(
+        return PipelineResponse(
             request,
             await self._sender.send(request.http_request, **kwargs)
         )
@@ -117,15 +117,9 @@ class AsyncPipeline(AbstractAsyncContextManager, Generic[HTTPRequestType, AsyncH
     async def __aexit__(self, *exc_details):  # pylint: disable=arguments-differ
         await self._transport.__aexit__(*exc_details)
 
-    async def send(self, request: Request, **kwargs):
-        return Response(
-            request,
-            await self._sender.send(request.http_request, **kwargs)
-        )
-
-    async def run(self, request: Request, **kwargs: Any):
+    async def run(self, request: PipelineRequest, **kwargs: Any):
         context = self._transport.build_context()
-        pipeline_request = Request(request, context)
+        pipeline_request = PipelineRequest(request, context)
         first_node = self._impl_policies[0] if self._impl_policies else _AsyncTransportRunner(self._transport)
         return await first_node.send(pipeline_request, **kwargs)  # type: ignore
 

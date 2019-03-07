@@ -26,7 +26,7 @@
 import sys
 
 from azure.core.pipeline.transport import (
-    TransportRequest,
+    HttpRequest,
     AioHttpTransport,
     AsyncHTTPSender,
     AsyncioRequestsTransport,
@@ -43,7 +43,7 @@ import pytest
 async def test_basic_aiohttp():
 
     conf = Configuration()
-    request = TransportRequest("GET", "http://bing.com")
+    request = HttpRequest("GET", "http://bing.com")
     async with AioHttpTransport(conf) as sender:
         response = await sender.send(request)
         assert response.body() is not None
@@ -54,7 +54,7 @@ async def test_basic_aiohttp():
 @pytest.mark.asyncio
 async def test_basic_async_requests():
 
-    request = TransportRequest("GET", "http://bing.com")
+    request = HttpRequest("GET", "http://bing.com")
     async with AsyncioRequestsTransport() as sender:
         response = await sender.send(request)
         assert response.body() is not None
@@ -65,7 +65,7 @@ async def test_basic_async_requests():
 async def test_conf_async_requests():
 
     conf = Configuration()
-    request = TransportRequest("GET", "http://bing.com/")
+    request = HttpRequest("GET", "http://bing.com/")
     async with AsyncioRequestsTransport(conf) as sender:
         response = await sender.send(request)
         assert response.body() is not None
@@ -76,7 +76,7 @@ def test_conf_async_trio_requests():
 
     async def do():
         conf = Configuration()
-        request = TransportRequest("GET", "http://bing.com/")
+        request = HttpRequest("GET", "http://bing.com/")
         async with TrioRequestsTransport(conf) as sender:
             return await sender.send(request)
             assert response.body() is not None

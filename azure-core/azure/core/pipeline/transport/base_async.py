@@ -25,8 +25,8 @@
 # --------------------------------------------------------------------------
 
 import abc
-from .base import _TransportResponseBase
-from azure.core.pipeline import Request, Response, Pipeline
+from .base import _HttpResponseBase
+from azure.core.pipeline import PipelineRequest, PipelineResponse, Pipeline
 from azure.core.pipeline.policies import SansIOHTTPPolicy
 from typing import Any, List, Union, Callable, AsyncIterator, Optional, Generic, TypeVar
 
@@ -49,7 +49,7 @@ HTTPResponseType = TypeVar("HTTPResponseType")
 HTTPRequestType = TypeVar("HTTPRequestType")
 
 
-class AsyncTransportResponse(_TransportResponseBase):
+class AsyncHttpResponse(_HttpResponseBase):
 
     def stream_download(self, chunk_size: Optional[int] = None, callback: Optional[Callable] = None) -> AsyncIterator[bytes]:
         """Generator for streaming request body data.

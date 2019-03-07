@@ -27,8 +27,8 @@ from typing import Any, Callable, AsyncIterator, Optional
 
 import aiohttp
 
-from .base import TransportRequest
-from .base_async import AsyncHTTPSender, AsyncTransportResponse
+from .base import HttpRequest
+from .base_async import AsyncHTTPSender, AsyncHttpResponse
 
 # Matching requests, because why not?
 CONTENT_CHUNK_SIZE = 10 * 1024
@@ -64,7 +64,7 @@ class AioHttpTransport(AsyncHTTPSender):
             session=self.session,
         )
 
-    async def send(self, request: TransportRequest, **config: Any) -> AsyncTransportResponse:
+    async def send(self, request: HttpRequest, **config: Any) -> AsyncHttpResponse:
         """Send the request using this HTTP sender.
 
         Will pre-load the body into memory to be available with a sync method.
@@ -81,9 +81,9 @@ class AioHttpTransport(AsyncHTTPSender):
         return response
 
 
-class AioHttpTransportResponse(AsyncTransportResponse):
+class AioHttpTransportResponse(AsyncHttpResponse):
 
-    def __init__(self, request: TransportRequest, aiohttp_response: aiohttp.ClientResponse) -> None:
+    def __init__(self, request: HttpRequest, aiohttp_response: aiohttp.ClientResponse) -> None:
         super(AioHttpTransportResponse, self).__init__(request, aiohttp_response)
         # https://aiohttp.readthedocs.io/en/stable/client_reference.html#aiohttp.ClientResponse
         self.status_code = aiohttp_response.status

@@ -45,7 +45,7 @@ class HTTPPolicy(ABC, Generic[HTTPRequestType, HTTPResponseType]):
 
     @abc.abstractmethod
     def send(self, request, **kwargs):
-        # type: (Request[HTTPRequestType], Any) -> Response[HTTPRequestType, HTTPResponseType]
+        # type: (PipelineRequest[HTTPRequestType], Any) -> PipelineResponse[HTTPRequestType, HTTPResponseType]
         """Mutate the request.
 
         Context content is dependent of the HTTPSender.
@@ -66,19 +66,19 @@ class SansIOHTTPPolicy(Generic[HTTPRequestType, HTTPResponseType]):
     sync or async implementation or specific HTTP lib
     """
     def on_request(self, request, **kwargs):
-        # type: (Request[HTTPRequestType], Any) -> None
+        # type: (PipelineRequest[HTTPRequestType], Any) -> None
         """Is executed before sending the request to next policy.
         """
         pass
 
     def on_response(self, request, response, **kwargs):
-        # type: (Request[HTTPRequestType], Response[HTTPRequestType, HTTPResponseType], Any) -> None
+        # type: (PipelineRequest[HTTPRequestType], PipelineResponse[HTTPRequestType, HTTPResponseType], Any) -> None
         """Is executed after the request comes back from the policy.
         """
         pass
 
     def on_exception(self, request, **kwargs):
-        # type: (Request[HTTPRequestType], Any) -> bool
+        # type: (PipelineRequest[HTTPRequestType], Any) -> bool
         """Is executed if an exception comes back fron the following
         policy.
 
@@ -103,7 +103,7 @@ class SansIOHTTPPolicy(Generic[HTTPRequestType, HTTPResponseType]):
 class RequestHistory(object):
  
     def __init__(self, http_request, http_response=None, error=None, context=None):
-        # type: (Request[HTTPRequestType], Exception, Optional[Dict[str, Any]]) -> None
+        # type: (PipelineRequest[HTTPRequestType], Exception, Optional[Dict[str, Any]]) -> None
         self.http_request = http_request
         self.http_response = http_response
         self.error = error

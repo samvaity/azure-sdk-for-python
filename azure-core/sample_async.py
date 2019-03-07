@@ -11,7 +11,7 @@ from azure.core.pipeline.policies import (
     AsyncRetryPolicy,
     AsyncRedirectPolicy
 )
-from azure.core.pipeline.transport import TransportRequest
+from azure.core.pipeline.transport import HttpRequest
 from azure.core.pipeline.transport import (
     AsyncioRequestsTransport,
     TrioRequestsTransport,
@@ -34,6 +34,6 @@ transport = AioHttpTransport(my_config)
 pipeline = AsyncPipeline(transport, policies=policies)
 
 async with pipeline:
-    new_request = TransportRequest("GET", "/")
+    new_request = HttpRequest("GET", "/")
     response = await pipeline.run(new_request)
     # deserialize response data

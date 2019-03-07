@@ -24,25 +24,25 @@
 #
 # --------------------------------------------------------------------------
 
-from .base import HTTPSender, TransportRequest, TransportResponse, TransportConfiguration
+from .base import HTTPSender, HttpRequest, HttpResponse, TransportConfiguration
 from .requests import RequestsTransport, RequestsTransportResponse, RequestsContext
 
 __all__ = [
     'HTTPSender',
     'TransportConfiguration',
-    'TransportRequest',
-    'TransportResponse',
+    'HttpRequest',
+    'HttpResponse',
     'RequestsTransport',
     'RequestsTransportResponse',
     'RequestsContext'
 ]
 
 try:
-    from .base_async import AsyncHTTPSender, AsyncTransportResponse
+    from .base_async import AsyncHTTPSender, AsyncHttpResponse
     from .requests_asyncio import AsyncioRequestsTransport, AsyncioRequestsTransportResponse
     __all__.extend([
         'AsyncHTTPSender',
-        'AsyncTransportResponse',
+        'AsyncHttpResponse',
         'AsyncioRequestsTransport',
         'AsyncioRequestsTransportResponse'
     ])

@@ -38,9 +38,7 @@ from ..exceptions import (
     ClientRequestError,
     raise_with_traceback
 )
-from ..universal_http.async_requests import AsyncBasicRequestsHTTPSender
-from . import AsyncHTTPSender, AsyncHTTPPolicy, Response, Request
-from .requests import RequestsContext
+from . import AsyncHTTPPolicy
 
 
 class AsyncRedirectPolicy(AsyncHTTPPolicy):

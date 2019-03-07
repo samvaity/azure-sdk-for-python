@@ -33,8 +33,8 @@ from oauthlib import oauth2
 import requests
 from requests.models import CONTENT_CHUNK_SIZE
 
-from .base import TransportRequest
-from .base_async import AsyncHTTPSender, AsyncTransportResponse
+from .base import HttpRequest
+from .base_async import AsyncHTTPSender, AsyncHttpResponse
 from .requests import RequestsTransport, RequestsTransportResponse
 from .requests_asyncio import _ResponseStopIteration, _iterate_response_content
 from azure.core.exceptions import (
@@ -75,7 +75,7 @@ class TrioStreamDownloadGenerator(AsyncIterator):
             self.response.close()
             raise
 
-class TrioRequestsTransportResponse(AsyncTransportResponse, RequestsTransportResponse):
+class TrioRequestsTransportResponse(AsyncHttpResponse, RequestsTransportResponse):
 
     def stream_download(self, chunk_size: Optional[int] = None, callback: Optional[Callable] = None) -> AsyncIteratorType[bytes]:
         """Generator for streaming request body data.
@@ -98,7 +98,7 @@ class TrioRequestsTransport(RequestsTransport, AsyncHTTPSender):  # type: ignore
     async def __aexit__(self, *exc_details):  # pylint: disable=arguments-differ
         return super(TrioRequestsTransport, self).__exit__()
 
-    async def send(self, request: TransportRequest, **kwargs: Any) -> AsyncTransportResponse:  # type: ignore
+    async def send(self, request: HttpRequest, **kwargs: Any) -> AsyncHttpResponse:  # type: ignore
         """Send the request using this HTTP sender.
         """
         trio_limiter = kwargs.get("trio_limiter", None)
@@ -112,7 +112,7 @@ class TrioRequestsTransport(RequestsTransport, AsyncHTTPSender):  # type: ignore
             limiter=trio_limiter
         )
         try:
-            return TrioRequestsTransportResponse(
+            return TrioRequestsHttpResponse(
                 request,
                 await future
             )

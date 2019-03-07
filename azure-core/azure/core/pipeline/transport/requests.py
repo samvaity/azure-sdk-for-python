@@ -30,8 +30,8 @@ import threading
 
 from oauthlib import oauth2
 from .base import (
-    TransportResponse,
-    _TransportResponseBase,
+    HttpResponse,
+    _HttpResponseBase,
     HTTPSender
 )
 
@@ -51,7 +51,7 @@ class RequestsContext(object):
         self.session = session
 
 
-class _RequestsTransportResponseBase(_TransportResponseBase):
+class _RequestsTransportResponseBase(_HttpResponseBase):
 
     def __init__(self, request, requests_response):
         super(_RequestsTransportResponseBase, self).__init__(request, requests_response)
@@ -71,7 +71,7 @@ class _RequestsTransportResponseBase(_TransportResponseBase):
         self.internal_response.raise_for_status()
 
 
-class RequestsTransportResponse(_RequestsTransportResponseBase, TransportResponse):
+class RequestsTransportResponse(_RequestsTransportResponseBase, HttpResponse):
 
     def stream_download(self, chunk_size=None, callback=None):
         # type: (Optional[int], Optional[Callable]) -> Iterator[bytes]
@@ -150,19 +150,27 @@ class RequestsTransport(HTTPSender):
         self.session.close()
 
     def send(self, request, **kwargs):
-        # type: (TransportRequest, Any) -> TransportResponse
+        # type: (HttpRequest, Any) -> HttpResponse
         """Send request object according to configuration.
 
         Allowed kwargs are:
         - session : will override the driver session and use yours. Should NOT be done unless really required.
         - anything else is sent straight to requests.
 
-        :param TransportRequest request: The request object to be sent.
+        :param HttpRequest request: The request object to be sent.
         """
         try:
             response = self.session.request(
                 request.method,
                 request.url,
+                headers=request.headers,
+                data=request.data,
+                files=request.files,
+                verify=self.config.verify,
+                timeout=self.config.timeout,
+                cert=self.config.cert,
+                proxies=self.config.proxies,
+                allow_redirects=False,
                 **kwargs)
 
         except requests.RequestException as err:

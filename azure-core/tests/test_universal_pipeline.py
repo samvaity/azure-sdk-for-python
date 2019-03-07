@@ -35,12 +35,12 @@ import pytest
 from azure.core.exceptions import DeserializationError
 from azure.core.configuration import Configuration
 from azure.core.pipeline import (
-    Response,
-    Request,
+    PipelineResponse,
+    PipelineRequest,
 )
 from azure.core.pipeline.transport import (
-    TransportRequest,
-    TransportResponse,
+    HttpRequest,
+    HttpResponse,
 )
 from azure.core.pipeline.transport.requests import RequestsTransportResponse
 
@@ -56,16 +56,16 @@ def test_user_agent():
         policy = UserAgentPolicy(None)
         assert policy.user_agent.endswith("mytools")
 
-        request = TransportRequest('GET', 'http://127.0.0.1/')
-        policy.on_request(Request(request))
+        request = HttpRequest('GET', 'http://127.0.0.1/')
+        policy.on_request(PipelineRequest(request))
         assert request.headers["user-agent"].endswith("mytools")
 
 @mock.patch('azure.core.pipeline.policies.universal._LOGGER')
 def test_no_log(mock_http_logger):
-    universal_request = TransportRequest('GET', 'http://127.0.0.1/')
-    request = Request(universal_request)
+    universal_request = HttpRequest('GET', 'http://127.0.0.1/')
+    request = PipelineRequest(universal_request)
     http_logger = NetworkTraceLoggingPolicy(Configuration())
-    response = Response(request, TransportResponse(universal_request, None))
+    response = PipelineResponse(request, HttpResponse(universal_request, None))
 
     # By default, no log handler for HTTP
     http_logger.on_request(request)
@@ -109,7 +109,7 @@ def test_raw_deserializer():
     raw_deserializer = ContentDecodePolicy()
 
     def build_response(body, content_type=None):
-        class MockResponse(TransportResponse):
+        class MockResponse(HttpResponse):
             def __init__(self, body, content_type):
                 super(MockResponse, self).__init__(None, None)
                 self._body = body
@@ -118,7 +118,7 @@ def test_raw_deserializer():
 
             def body(self):
                 return self._body
-        return Response(None, MockResponse(body, content_type))
+        return PipelineResponse(None, MockResponse(body, content_type))
 
     response = build_response(b"<groot/>", content_type="application/xml")
     raw_deserializer.on_response(None, response, stream=False)
@@ -157,7 +157,7 @@ def test_raw_deserializer():
     req_response.headers["content-type"] = "application/json"
     req_response._content = b'{"success": true}'
     req_response._content_consumed = True
-    response = Response(None, RequestsTransportResponse(None, req_response))
+    response = PipelineResponse(None, RequestsTransportResponse(None, req_response))
 
     raw_deserializer.on_response(None, response, stream=False)
     result = response.context["deserialized_data"]
