@@ -163,12 +163,11 @@ class RequestsTransport(HttpTransport):
                 request.method,
                 request.url,
                 headers=request.headers,
-                data=request.data,
+                json=request.data,
                 files=request.files,
                 verify=self.config.verify,
                 timeout=self.config.timeout,
                 cert=self.config.cert,
-                proxies=self.config.proxies,
                 allow_redirects=False,
                 **kwargs)
 
