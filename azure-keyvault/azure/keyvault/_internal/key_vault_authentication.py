@@ -8,10 +8,10 @@ import threading
 from collections import namedtuple
 
 import requests
-from azure.keyvault import http_bearer_challenge_cache as ChallengeCache
-from azure.keyvault.http_challenge import HttpChallenge
-from azure.keyvault.http_message_security import HttpMessageSecurity
-from azure.keyvault._internal import _RsaKey
+from . import http_bearer_challenge_cache as ChallengeCache
+from .http_challenge import HttpChallenge
+from .http_message_security import HttpMessageSecurity
+from ._internal import _RsaKey
 from msrest.authentication import OAuthTokenAuthentication
 from requests.auth import AuthBase
 from requests.cookies import extract_cookies_to_jar
@@ -40,7 +40,7 @@ class KeyVaultAuthBase(AuthBase):
         """
         Creates a new KeyVaultAuthBase instance used for handling authentication challenges, by hooking into the request AuthBase
         extension model.
-        :param authorization_callback: A callback used to provide authentication credentials to the key vault data service.  
+        :param authorization_callback: A callback used to provide authentication credentials to the key vault data service.
         This callback should take four str arguments: authorization uri, resource, scope, and scheme, and return
         an AccessToken
                     return AccessToken(scheme=token['token_type'], token=token['access_token'])
@@ -65,8 +65,8 @@ class KeyVaultAuthBase(AuthBase):
         """
         Called prior to requests being sent.
         :param request: Request to be sent
-        :return: returns the original request, registering hooks on the response if it is the first time this url has been called and an 
-        auth challenge might be returned  
+        :return: returns the original request, registering hooks on the response if it is the first time this url has been called and an
+        auth challenge might be returned
         """
         # attempt to pre-fetch challenge if cached
         if self._callback:
@@ -185,7 +185,7 @@ class KeyVaultAuthBase(AuthBase):
 class KeyVaultAuthentication(OAuthTokenAuthentication):
     """
     Authentication class to be used as credentials for the KeyVaultClient.
-    :Example Usage:    
+    :Example Usage:
             def auth_callack(server, resource, scope):
                 self.data_creds = self.data_creds or ServicePrincipalCredentials(client_id=self.config.client_id,
                                                                                  secret=self.config.client_secret,
@@ -200,8 +200,8 @@ class KeyVaultAuthentication(OAuthTokenAuthentication):
     def __init__(self, authorization_callback=None, credentials=None):
         """
         Creates a new KeyVaultAuthentication instance used for authentication in the KeyVaultClient
-        :param authorization_callback: A callback used to provide authentication credentials to the key vault data service.  
-        This callback should take three str arguments: authorization uri, resource, and scope, and return 
+        :param authorization_callback: A callback used to provide authentication credentials to the key vault data service.
+        This callback should take three str arguments: authorization uri, resource, and scope, and return
         a tuple of (token type, access token).
         :param credentials:: Credentials needed for the client to connect to Azure.
         :type credentials: :mod:`A msrestazure Credentials
@@ -226,7 +226,7 @@ class KeyVaultAuthentication(OAuthTokenAuthentication):
 
         self.auth = KeyVaultAuthBase(authorization_callback)
         self._callback = authorization_callback
-        
+
     def signed_session(self, session=None):
         session = session or requests.Session()
         session.auth = self.auth
