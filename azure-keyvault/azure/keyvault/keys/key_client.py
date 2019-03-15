@@ -1,3 +1,4 @@
+import functools
 from typing import Any, List, Mapping, Optional
 import uuid
 
@@ -74,7 +75,7 @@ class KeyClient:
             BearerTokenCredentialPolicy(credentials),
             config.redirect,
             config.retry,
-            config.logging
+            config.logging,
         ]
         self._pipeline = Pipeline(transport, policies=policies)
         models = {
@@ -205,96 +206,21 @@ class KeyClient:
 
     def get_all_deleted_keys(self, max_page_size=None, **kwargs):
         # type: (Optional[int], Any) -> DeletedKeyItemPaged
-
-        def internal_paging(next_link=None, raw=False):
-            if not next_link:
-                url = "{}/{}".format(self.vault_url, "deletedkeys")
-                query_parameters = {"api-version": self.API_VERSION}
-                if max_page_size is not None:
-                    query_parameters["maxresults"] = str(max_page_size)
-            else:
-                url = next_link
-                query_parameters = {}
-
-            headers = {"x-ms-client-request-id": str(uuid.uuid1())}
-
-            request = HttpRequest("GET", url, headers)
-            request.format_parameters(query_parameters)
-
-            response = self._pipeline.run(request, **kwargs).http_response
-
-            if response.status_code != 200:
-                raise ClientRequestError(
-                    "Request failed with code {}: '{}'".format(
-                        response.status_code, response.text()
-                    )
-                )
-
-            return response
-
-        return DeletedKeyItemPaged(internal_paging, self._deserialize.dependencies)
+        url = "{}/{}".format(self.vault_url, "deletedkeys")
+        paging = functools.partial(self._internal_paging, url, max_page_size)
+        return DeletedKeyItemPaged(paging, self._deserialize.dependencies)
 
     def get_all_keys(self, max_page_size=None, **kwargs):
         # type: (Optional[int], Any) -> KeyItemPaged
-
-        def internal_paging(next_link=None, raw=False):
-            if not next_link:
-                url = "{}/{}".format(self.vault_url, "keys")
-                query_parameters = {"api-version": self.API_VERSION}
-                if max_page_size is not None:
-                    query_parameters["maxresults"] = str(max_page_size)
-            else:
-                url = next_link
-                query_parameters = {}
-
-            headers = {"x-ms-client-request-id": str(uuid.uuid1())}
-
-            request = HttpRequest("GET", url, headers)
-            request.format_parameters(query_parameters)
-
-            response = self._pipeline.run(request, **kwargs).http_response
-
-            if response.status_code != 200:
-                raise ClientRequestError(
-                    "Request failed with code {}: '{}'".format(
-                        response.status_code, response.text()
-                    )
-                )
-
-            return response
-
-        return KeyItemPaged(internal_paging, self._deserialize.dependencies)
+        url = "{}/{}".format(self.vault_url, "keys")
+        paging = functools.partial(self._internal_paging, url, max_page_size)
+        return KeyItemPaged(paging, self._deserialize.dependencies)
 
     def get_key_versions(self, name, max_page_size=None, **kwargs):
-        # type: (str, Optional[int], Any) -> KeyItemPaged
-
-        def internal_paging(next_link=None, raw=False):
-            if not next_link:
-                url = "/".join([self.vault_url, "keys", name, "versions"])
-                query_parameters = {"api-version": self.API_VERSION}
-                if max_page_size is not None:
-                    query_parameters["maxresults"] = str(max_page_size)
-            else:
-                url = next_link
-                query_parameters = {}
-
-            headers = {"x-ms-client-request-id": str(uuid.uuid1())}
-
-            request = HttpRequest("GET", url, headers)
-            request.format_parameters(query_parameters)
-
-            response = self._pipeline.run(request, **kwargs).http_response
-
-            if response.status_code != 200:
-                raise ClientRequestError(
-                    "Request failed with code {}: '{}'".format(
-                        response.status_code, response.text()
-                    )
-                )
-
-            return response
-
-        return KeyItemPaged(internal_paging, self._deserialize.dependencies)
+        # type: (Optional[int], Any) -> KeyItemPaged
+        url = "/".join([self.vault_url, "keys", name, "versions"])
+        paging = functools.partial(self._internal_paging, url, max_page_size)
+        return KeyItemPaged(paging, self._deserialize.dependencies)
 
     # def import_key(self, name, key, hsm=None, attributes=None, tags=None, **kwargs):
     #     pass
@@ -371,3 +297,30 @@ class KeyClient:
 
     # def wrap_key(self, name, version, algorithm, value, **kwargs):
     #     pass
+
+    def _internal_paging(self, url, max_page_size, next_link=None, raw=False, **kwargs):
+        # type: (str, int, Optional[str], Optional[bool], Any) -> HttpResponse
+        if next_link:
+            url = next_link
+            query_parameters = {}
+        else:
+            query_parameters = {"api-version": self.API_VERSION}
+            if max_page_size is not None:
+                query_parameters["maxresults"] = str(max_page_size)
+
+        headers = {"x-ms-client-request-id": str(uuid.uuid1())}
+
+        request = HttpRequest("GET", url, headers)
+        request.format_parameters(query_parameters)
+
+        response = self._pipeline.run(request, **kwargs).http_response
+
+        if response.status_code != 200:
+            raise ClientRequestError(
+                "Request failed with code {}: '{}'".format(
+                    response.status_code, response.text()
+                )
+            )
+
+        return response
+
