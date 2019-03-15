@@ -1,4 +1,4 @@
-from .keys.key_client import KeyClient
+from .keys._client import KeyClient
 from .secrets._client import SecretClient
 
 

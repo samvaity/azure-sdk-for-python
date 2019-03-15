@@ -2,7 +2,7 @@ import functools
 from typing import Any, List, Mapping, Optional
 import uuid
 
-from .models import (
+from ._models import (
     Attributes,
     DeletedKey,
     DeletedKeyItem,
