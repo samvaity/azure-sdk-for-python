@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, List, Optional
 import uuid
 
 from .models import (
@@ -22,7 +22,12 @@ from azure.core.pipeline.policies import (
     RedirectPolicy,
     ContentDecodePolicy,
 )
-from azure.core.pipeline.transport import RequestsTransport, HttpRequest
+from azure.core.pipeline.transport import (
+    RequestsTransport,
+    HttpRequest,
+    HttpResponse,
+    HttpTransport,
+)
 from msrest import Serializer, Deserializer
 
 
@@ -31,6 +36,7 @@ class BearerTokenCredentialPolicy(HTTPPolicy):
         self._credentials = credentials
 
     def send(self, request, **kwargs):
+        # type: (HttpRequest, Any) -> HttpResponse
         auth_header = "Bearer " + self._credentials.token["access_token"]
         request.http_request.headers["Authorization"] = auth_header
 
@@ -42,6 +48,7 @@ class KeyClient:
 
     @staticmethod
     def create_config(**kwargs):
+        # type: (Any) -> Configuration
         config = Configuration(**kwargs)
         config.user_agent = UserAgentPolicy("KeyClient", **kwargs)
         headers = {"x-ms-client-request-id": str(uuid.uuid1())}
@@ -52,6 +59,7 @@ class KeyClient:
         return config
 
     def __init__(self, vault_url, credentials, config=None, transport=None):
+        # type: (str, Any, Configuration, HttpTransport) -> None
         self.vault_url = vault_url.strip("/")
         config = config or KeyClient.create_config()
         transport = RequestsTransport(config)
@@ -92,6 +100,7 @@ class KeyClient:
         curve=None,
         **kwargs,
     ):
+        # type: (str, str, Optional[int], Optional[List[str]], Any, Any, Any, Any) -> Key
         url = "/".join([self.vault_url, "keys", name, "create"])
         headers = {
             "Content-Type": "application/json; charset=utf-8",
@@ -123,6 +132,7 @@ class KeyClient:
         return key
 
     def delete_key(self, name, **kwargs):
+        # type: (str, Any) -> DeletedKey
         url = "/".join([self.vault_url, "keys", name])
 
         request = HttpRequest("DELETE", url)
@@ -134,7 +144,7 @@ class KeyClient:
         return bundle
 
     def get_key(self, name, version="", **kwargs):
-        # type: (str, str, **bool) -> Key
+        # type: (str, str, Any) -> Key
         """Gets the public part of a stored key.
 
         The get key operation is applicable to all key types. If the requested
@@ -166,7 +176,7 @@ class KeyClient:
         pass
 
     def get_all_keys(self, max_page_size=None, **kwargs):
-        # type: (Optional[int], **bool) -> KeyItemPaged
+        # type: (Optional[int], Any) -> KeyItemPaged
 
         def internal_paging(next_link=None, raw=False):
             if not next_link:
