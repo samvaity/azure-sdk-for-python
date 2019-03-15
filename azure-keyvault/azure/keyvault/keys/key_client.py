@@ -1,15 +1,18 @@
-from typing import Any, List, Optional
+from typing import Any, List, Mapping, Optional
 import uuid
 
 from .models import (
     Attributes,
     DeletedKey,
+    DeletedKeyItem,
+    DeletedKeyItemPaged,
     JsonWebKey,
     Key,
     KeyAttributes,
     KeyCreateParameters,
     KeyItem,
     KeyItemPaged,
+    KeyUpdateParameters,
 )
 from azure.core.configuration import Configuration
 from azure.core.exceptions import ClientRequestError
@@ -51,11 +54,13 @@ class KeyClient:
         # type: (Any) -> Configuration
         config = Configuration(**kwargs)
         config.user_agent = UserAgentPolicy("KeyClient", **kwargs)
-        headers = {"x-ms-client-request-id": str(uuid.uuid1())}
-        config.headers = HeadersPolicy(headers)
+        config.headers = None
         config.retry = RetryPolicy(**kwargs)
         config.redirect = RedirectPolicy(**kwargs)
-        config.verify = config.timeout = config.cert = None
+
+        # TODO: these are requests-specific
+        config.cert = config.timeout = None
+        config.verify = True
         return config
 
     def __init__(self, vault_url, credentials, config=None, transport=None):
@@ -67,15 +72,16 @@ class KeyClient:
             config.user_agent,
             config.headers,
             BearerTokenCredentialPolicy(credentials),
-            # ContentDecodePolicy(),
             config.redirect,
             config.retry,
-            # config.logging, # TODO: no default logging policy
+            config.logging
         ]
         self._pipeline = Pipeline(transport, policies=policies)
         models = {
             "Attributes": Attributes,
             "DeletedKey": DeletedKey,
+            "DeletedKeyItem": DeletedKeyItem,
+            "DeletedKeyItemPaged": DeletedKeyItemPaged,
             "JsonWebKey": JsonWebKey,
             "Key": Key,
             "KeyAttributes": KeyAttributes,
@@ -86,8 +92,8 @@ class KeyClient:
         self._deserialize = Deserializer(models)
         self._serialize = Serializer(models)
 
-    def backup_key(self, name, **kwargs):
-        pass
+    # def backup_key(self, name, **kwargs):
+    #     pass
 
     def create_key(
         self,
@@ -137,11 +143,16 @@ class KeyClient:
 
         request = HttpRequest("DELETE", url)
         request.format_parameters({"api-version": self.API_VERSION})
-        response = self._pipeline.run(request, **kwargs)
+        response = self._pipeline.run(request, **kwargs).http_response
+        if response.status_code != 200:
+            raise ClientRequestError(
+                "Request failed with code {}: '{}'".format(
+                    response.status_code, response.text()
+                )
+            )
+        deleted_key = self._deserialize("DeletedKey", response)
 
-        bundle = self._deserialize("DeletedKey", response.http_response)
-
-        return bundle
+        return deleted_key
 
     def get_key(self, name, version="", **kwargs):
         # type: (str, str, Any) -> Key
@@ -163,17 +174,65 @@ class KeyClient:
 
         request = HttpRequest("GET", url)
         request.format_parameters({"api-version": self.API_VERSION})
-        response = self._pipeline.run(request, **kwargs)
-
-        key = self._deserialize("Key", response.http_response)
+        response = self._pipeline.run(request, **kwargs).http_response
+        if response.status_code != 200:
+            raise ClientRequestError(
+                "Request failed with code {}: '{}'".format(
+                    response.status_code, response.text()
+                )
+            )
+        key = self._deserialize("Key", response)
 
         return key
 
     def get_deleted_key(self, name, **kwargs):
-        pass
+        # type: (str, Any) -> DeletedKey
 
-    def get_all_deleted_keys(self, maxresults=None, **kwargs):
-        pass
+        url = "/".join([self.vault_url, "deletedkeys", name])
+
+        request = HttpRequest("GET", url)
+        request.format_parameters({"api-version": self.API_VERSION})
+        response = self._pipeline.run(request, **kwargs).http_response
+        if response.status_code != 200:
+            raise ClientRequestError(
+                "Request failed with code {}: '{}'".format(
+                    response.status_code, response.text()
+                )
+            )
+        deleted_key = self._deserialize("DeletedKey", response)
+
+        return deleted_key
+
+    def get_all_deleted_keys(self, max_page_size=None, **kwargs):
+        # type: (Optional[int], Any) -> DeletedKeyItemPaged
+
+        def internal_paging(next_link=None, raw=False):
+            if not next_link:
+                url = "{}/{}".format(self.vault_url, "deletedkeys")
+                query_parameters = {"api-version": self.API_VERSION}
+                if max_page_size is not None:
+                    query_parameters["maxresults"] = str(max_page_size)
+            else:
+                url = next_link
+                query_parameters = {}
+
+            headers = {"x-ms-client-request-id": str(uuid.uuid1())}
+
+            request = HttpRequest("GET", url, headers)
+            request.format_parameters(query_parameters)
+
+            response = self._pipeline.run(request, **kwargs).http_response
+
+            if response.status_code != 200:
+                raise ClientRequestError(
+                    "Request failed with code {}: '{}'".format(
+                        response.status_code, response.text()
+                    )
+                )
+
+            return response
+
+        return DeletedKeyItemPaged(internal_paging, self._deserialize.dependencies)
 
     def get_all_keys(self, max_page_size=None, **kwargs):
         # type: (Optional[int], Any) -> KeyItemPaged
@@ -188,10 +247,7 @@ class KeyClient:
                 url = next_link
                 query_parameters = {}
 
-            headers = {
-                "Content-Type": "application/json; charset=utf-8",
-                "x-ms-client-request-id": str(uuid.uuid1()),
-            }
+            headers = {"x-ms-client-request-id": str(uuid.uuid1())}
 
             request = HttpRequest("GET", url, headers)
             request.format_parameters(query_parameters)
@@ -209,20 +265,78 @@ class KeyClient:
 
         return KeyItemPaged(internal_paging, self._deserialize.dependencies)
 
-    def get_key_versions(self, name, maxresults=None, **kwargs):
-        pass
+    def get_key_versions(self, name, max_page_size=None, **kwargs):
+        # type: (str, Optional[int], Any) -> KeyItemPaged
 
-    def import_key(self, name, key, hsm=None, attributes=None, tags=None, **kwargs):
-        pass
+        def internal_paging(next_link=None, raw=False):
+            if not next_link:
+                url = "/".join([self.vault_url, "keys", name, "versions"])
+                query_parameters = {"api-version": self.API_VERSION}
+                if max_page_size is not None:
+                    query_parameters["maxresults"] = str(max_page_size)
+            else:
+                url = next_link
+                query_parameters = {}
+
+            headers = {"x-ms-client-request-id": str(uuid.uuid1())}
+
+            request = HttpRequest("GET", url, headers)
+            request.format_parameters(query_parameters)
+
+            response = self._pipeline.run(request, **kwargs).http_response
+
+            if response.status_code != 200:
+                raise ClientRequestError(
+                    "Request failed with code {}: '{}'".format(
+                        response.status_code, response.text()
+                    )
+                )
+
+            return response
+
+        return KeyItemPaged(internal_paging, self._deserialize.dependencies)
+
+    # def import_key(self, name, key, hsm=None, attributes=None, tags=None, **kwargs):
+    #     pass
 
     def purge_deleted_key(self, name, **kwargs):
-        pass
+        # type: (str, Any) -> None
+        url = "/".join([self.vault_url, "deletedkeys", name])
+
+        request = HttpRequest("DELETE", url)
+        request.format_parameters({"api-version": self.API_VERSION})
+
+        response = self._pipeline.run(request, **kwargs).http_response
+        if response.status_code != 204:
+            raise ClientRequestError(
+                "Request failed with code {}: '{}'".format(
+                    response.status_code, response.text()
+                )
+            )
+
+        return
 
     def recover_deleted_key(self, name, **kwargs):
-        pass
+        # type: (str, Any) -> Key
+        url = "/".join([self.vault_url, "deletedkeys", name, "recover"])
 
-    def restore_key(self, key_bundle_backup, **kwargs):
-        pass
+        request = HttpRequest("POST", url)
+        request.format_parameters({"api-version": self.API_VERSION})
+
+        response = self._pipeline.run(request, **kwargs).http_response
+        if response.status_code != 200:
+            raise ClientRequestError(
+                "Request failed with code {}: '{}'".format(
+                    response.status_code, response.text()
+                )
+            )
+
+        key = self._deserialize("Key", response)
+
+        return key
+
+    # def restore_key(self, key_bundle_backup, **kwargs):
+    #     pass
 
     # def unwrap_key(self, name, version, algorithm, value, **kwargs):
     #     pass
@@ -230,7 +344,30 @@ class KeyClient:
     def update_key(
         self, name, version, key_ops=None, attributes=None, tags=None, **kwargs
     ):
-        pass
+        # type: (str, str, Optional[List[str]], Mapping[str, str], Mapping[str, str], Any) -> Key
+        url = "/".join([self.vault_url, "keys", name, version])
+
+        headers = {
+            "Content-Type": "application/json; charset=utf-8",
+            "x-ms-client-request-id": str(uuid.uuid1()),
+        }
+
+        update_params = KeyUpdateParameters(
+            key_ops=key_ops, key_attributes=attributes, tags=tags
+        )
+        body = self._serialize.body(update_params, "KeyUpdateParameters")
+        request = HttpRequest("PATCH", url, headers=headers, data=body)
+        request.format_parameters({"api-version": self.API_VERSION})
+        response = self._pipeline.run(request, **kwargs).http_response
+        if response.status_code != 200:
+            raise ClientRequestError(
+                "Request failed with code {}: '{}'".format(
+                    response.status_code, response.text()
+                )
+            )
+        key = self._deserialize("Key", response)
+
+        return key
 
     # def wrap_key(self, name, version, algorithm, value, **kwargs):
     #     pass

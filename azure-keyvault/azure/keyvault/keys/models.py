@@ -1,6 +1,6 @@
 from msrest.paging import Paged
 from msrest.serialization import Model
-from ..vault_id import _parse_vault_id
+from .._internal import _parse_vault_id
 
 
 class Attributes(Model):
@@ -256,6 +256,31 @@ class KeyAttributes(Attributes):
         self.recovery_level = None
 
 
+class KeyUpdateParameters(Model):
+    """The key update parameters.
+    :param key_ops: Json web key operations. For more information on possible
+     key operations, see JsonWebKeyOperation.
+    :type key_ops: list[str or
+     ~azure.keyvault.v7_0.models.JsonWebKeyOperation]
+    :param key_attributes:
+    :type key_attributes: ~azure.keyvault.v7_0.models.KeyAttributes
+    :param tags: Application specific metadata in the form of key-value pairs.
+    :type tags: dict[str, str]
+    """
+
+    _attribute_map = {
+        "key_ops": {"key": "key_ops", "type": "[str]"},
+        "key_attributes": {"key": "attributes", "type": "KeyAttributes"},
+        "tags": {"key": "tags", "type": "{str}"},
+    }
+
+    def __init__(self, **kwargs):
+        super(KeyUpdateParameters, self).__init__(**kwargs)
+        self.key_ops = kwargs.get("key_ops", None)
+        self.key_attributes = kwargs.get("key_attributes", None)
+        self.tags = kwargs.get("tags", None)
+
+
 class KeyCreateParameters(Model):
     """The key create parameters.
 
@@ -334,6 +359,67 @@ class KeyItem(Model):
         self.attributes = kwargs.get("attributes", None)
         self.tags = kwargs.get("tags", None)
         self.managed = None
+
+
+class DeletedKeyItem(KeyItem):
+    """The deleted key item containing the deleted key metadata and information
+    about deletion.
+    Variables are only populated by the server, and will be ignored when
+    sending a request.
+    :param kid: Key identifier.
+    :type kid: str
+    :param attributes: The key management attributes.
+    :type attributes: ~azure.keyvault.v7_0.models.KeyAttributes
+    :param tags: Application specific metadata in the form of key-value pairs.
+    :type tags: dict[str, str]
+    :ivar managed: True if the key's lifetime is managed by key vault. If this
+     is a key backing a certificate, then managed will be true.
+    :vartype managed: bool
+    :param recovery_id: The url of the recovery object, used to identify and
+     recover the deleted key.
+    :type recovery_id: str
+    :ivar scheduled_purge_date: The time when the key is scheduled to be
+     purged, in UTC
+    :vartype scheduled_purge_date: datetime
+    :ivar deleted_date: The time when the key was deleted, in UTC
+    :vartype deleted_date: datetime
+    """
+
+    _validation = {
+        "managed": {"readonly": True},
+        "scheduled_purge_date": {"readonly": True},
+        "deleted_date": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "kid": {"key": "kid", "type": "str"},
+        "attributes": {"key": "attributes", "type": "KeyAttributes"},
+        "tags": {"key": "tags", "type": "{str}"},
+        "managed": {"key": "managed", "type": "bool"},
+        "recovery_id": {"key": "recoveryId", "type": "str"},
+        "scheduled_purge_date": {"key": "scheduledPurgeDate", "type": "unix-time"},
+        "deleted_date": {"key": "deletedDate", "type": "unix-time"},
+    }
+
+    def __init__(self, **kwargs):
+        super(DeletedKeyItem, self).__init__(**kwargs)
+        self.recovery_id = kwargs.get("recovery_id", None)
+        self.scheduled_purge_date = None
+        self.deleted_date = None
+
+
+class DeletedKeyItemPaged(Paged):
+    """
+    A paging container for iterating over a list of :class:`DeletedKeyItem <azure.keyvault.v7_0.models.DeletedKeyItem>` object
+    """
+
+    _attribute_map = {
+        "next_link": {"key": "nextLink", "type": "str"},
+        "current_page": {"key": "value", "type": "[DeletedKeyItem]"},
+    }
+
+    def __init__(self, *args, **kwargs):
+        super(DeletedKeyItemPaged, self).__init__(*args, **kwargs)
 
 
 class KeyItemPaged(Paged):
