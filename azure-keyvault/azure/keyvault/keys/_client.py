@@ -93,9 +93,6 @@ class KeyClient:
         self._deserialize = Deserializer(models)
         self._serialize = Serializer(models)
 
-    # def backup_key(self, name, **kwargs):
-    #     pass
-
     def create_key(
         self,
         name,
@@ -222,9 +219,6 @@ class KeyClient:
         paging = functools.partial(self._internal_paging, url, max_page_size)
         return KeyItemPaged(paging, self._deserialize.dependencies)
 
-    # def import_key(self, name, key, hsm=None, attributes=None, tags=None, **kwargs):
-    #     pass
-
     def purge_deleted_key(self, name, **kwargs):
         # type: (str, Any) -> None
         url = "/".join([self.vault_url, "deletedkeys", name])
@@ -261,12 +255,6 @@ class KeyClient:
 
         return key
 
-    # def restore_key(self, key_bundle_backup, **kwargs):
-    #     pass
-
-    # def unwrap_key(self, name, version, algorithm, value, **kwargs):
-    #     pass
-
     def update_key(
         self, name, version, key_ops=None, attributes=None, tags=None, **kwargs
     ):
@@ -295,9 +283,6 @@ class KeyClient:
 
         return key
 
-    # def wrap_key(self, name, version, algorithm, value, **kwargs):
-    #     pass
-
     def _internal_paging(self, url, max_page_size, next_link=None, raw=False, **kwargs):
         # type: (str, int, Optional[str], Optional[bool], Any) -> HttpResponse
         if next_link:
@@ -324,3 +309,18 @@ class KeyClient:
 
         return response
 
+    # TODO:
+    # def import_key(self, name, key, hsm=None, attributes=None, tags=None, **kwargs):
+    #     pass
+
+    # def backup_key(self, name, **kwargs):
+    #     pass
+
+    # def restore_key(self, key_bundle_backup, **kwargs):
+    #     pass
+
+    # def wrap_key(self, name, version, algorithm, value, **kwargs):
+    #     pass
+
+    # def unwrap_key(self, name, version, algorithm, value, **kwargs):
+    #     pass
