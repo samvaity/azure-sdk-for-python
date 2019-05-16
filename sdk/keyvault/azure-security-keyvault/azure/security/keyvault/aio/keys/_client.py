@@ -32,8 +32,8 @@ class KeyClient:
 
     Example:
         .. literalinclude:: ../tests/test_examples_keys.py
-            :start-after: [START create_Key_client]
-            :end-before: [END create_Key_client]
+            :start-after: [START create_key_client]
+            :end-before: [END create_key_client]
             :language: python
             :dedent: 4
             :caption: Creates a new instance of the Key client
@@ -71,10 +71,10 @@ class KeyClient:
     def vault_url(self) -> str:
         return self._vault_url
 
-    async def get_Key(self, name: str, version: str, **kwargs: Mapping[str, Any]) -> Key:
-        """Get a specified Key from the vault.
+    async def get_key(self, name: str, version: str, **kwargs: Mapping[str, Any]) -> Key:
+        """Get a specified key from the vault.
 
-        The GET operation is applicable to any Key stored in Azure Key
+        The GET operation is applicable to any key stored in Azure Key
         Vault. This operation requires the Keys/get permission.
 
         :param str name: The name of the Key.
@@ -94,7 +94,7 @@ class KeyClient:
                 :caption: Get Key from the key vault
         """
         bundle = await self._client.get_Key(self.vault_url, name, version, error_map={404: ResourceNotFoundError})
-        return Key.from_Key_bundle(bundle)
+        return Key._from_key_bundle(bundle)
 
     async def create_key(
         self,
