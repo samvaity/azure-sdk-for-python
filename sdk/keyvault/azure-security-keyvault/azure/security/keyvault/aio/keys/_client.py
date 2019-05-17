@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See LICENSE.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
-from typing import Any, Mapping, Optional, AsyncGenerator, Dict
+from typing import TYPE_CHECKING
 
 from azure.core.configuration import Configuration
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
@@ -14,10 +14,14 @@ from azure.core.pipeline import AsyncPipeline
 from azure.keyvault._internal import _BearerTokenCredentialPolicy
 from azure.keyvault._generated import KeyVaultClientAsync
 
+# from .._generated.v7_0.models import KeyAttributes as _KeyAttributes
+
 from ...keys._models import Key, DeletedKey, KeyBase
 from datetime import datetime
 
 # TODO: update all returns and raises
+if TYPE_CHECKING:
+    from typing import Any, Mapping, Optional, AsyncGenerator, Dict, List
 
 
 class KeyClient:
@@ -31,7 +35,7 @@ class KeyClient:
     :param ~azure.core.configuration.Configuration config:  The configuration for the KeyClient
 
     Example:
-        .. literalinclude:: ../tests/test_examples_keys.py
+        .. literalinclude:: ../tests/test_examples_keys_async.py
             :start-after: [START create_key_client]
             :end-before: [END create_key_client]
             :language: python
@@ -39,7 +43,14 @@ class KeyClient:
             :caption: Creates a new instance of the Key client
     """
 
-    def __init__(self, vault_url: str, credentials: Any, config=None, api_version: Optional[str]=None, **kwargs: Optional[Mapping[str, Any]])-> None:
+    def __init__(
+        self,
+        vault_url: str,
+        credentials: Any,
+        config=None,
+        api_version: Optional[str] = None,
+        **kwargs: Optional[Mapping[str, Any]]
+    ) -> None:
         if not credentials:
             raise ValueError("credentials")
 
@@ -72,43 +83,46 @@ class KeyClient:
         return self._vault_url
 
     async def get_key(self, name: str, version: str, **kwargs: Mapping[str, Any]) -> Key:
-        """Get a specified key from the vault.
-
-        The GET operation is applicable to any key stored in Azure Key
-        Vault. This operation requires the Keys/get permission.
-
-        :param str name: The name of the Key.
-        :param str version: The version of the Key. If version is None or an empty string, the latest version of
-            the Key is returned.
-        :returns: An instance of Key
-        :rtype: ~azure.keyvault.Keys._models.Key
-        :raises:
-         :class:`KeyVaultErrorException<azure.keyvault.KeyVaultErrorException>`
-
+        """Gets the public part of a stored key.
+        
+        The get key operation is applicable to all key types. If the requested
+        key is symmetric, then no key material is released in the response.
+        This operation requires the keys/get permission.
+        :param name: The name of the key to get.
+        :type name
+        :param version: Retrieves a specific version of a key. If the version is None or an empty string, the latest version of
+            the key is returned
+        :type version
+        :returns: Key
+        :rtype: ~azure.keyvault.keys._models.Key
+        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        
         Example:
             .. literalinclude:: ../tests/test_examples_keys_async.py
-                :start-after: [START get_Key]
-                :end-before: [END get_Key]
+                :start-after: [START get_key]
+                :end-before: [END get_key]
                 :language: python
                 :dedent: 4
-                :caption: Get Key from the key vault
+                :caption: Retrieves a key from the key vault
         """
-        bundle = await self._client.get_Key(self.vault_url, name, version, error_map={404: ResourceNotFoundError})
+        bundle = await self._client.get_key(self.vault_url, name, version, error_map={404: ResourceNotFoundError})
         return Key._from_key_bundle(bundle)
 
     async def create_key(
         self,
         name: str,
-        key_type,
+        key_type: str,
         size: Optional[int] = None,
+        key_ops: Optional[List[str]] = None,
         enabled: Optional[bool] = None,
         not_before: Optional[datetime] = None,
         expires: Optional[datetime] = None,
         tags: Optional[Dict[str, str]] = None,
-        curve: Optional[str]=None,
+        curve: Optional[str] = None,
         **kwargs: Mapping[str, Any]
     ) -> Key:
         """Creates a new key, stores it, then returns key attributes to the client.
+
         The create key operation can be used to create any key type in Azure
         Key Vault. If the named key already exists, Azure Key Vault creates a
         new version of the key. It requires the keys/create permission.
@@ -142,6 +156,7 @@ class KeyClient:
         :returns: The created key
         :rtype: ~azure.keyvault.keys._models.Key
         :raises: ~azure.core.exceptions.ClientRequestError if the client failed to create the key
+        
         Example:
             .. literalinclude:: ../tests/test_examples_keys_async.py
                 :start-after: [START create_key]
@@ -151,281 +166,335 @@ class KeyClient:
                 :caption: Creates a key in the key vault
         """
         if enabled is not None or not_before is not None or expires is not None:
-            attributes = self._client.models.KeyBase(enabled=enabled, not_before=not_before, expires=expires)
+            attributes = self._client.models.KeyAttributes(enabled=enabled, not_before=not_before, expires=expires)
         else:
             attributes = None
-        bundle = await self._client.set_Key(
-            self.vault_url, name, value, Key_attributes=attributes, content_type=content_type, tags=tags
+        bundle = await self._client.create_key(
+            self.vault_url,
+            name,
+            key_type,
+            key_size=size,
+            key_ops=key_ops,
+            key_attributes=attributes,
+            tags=tags,
+            curve=curve,
         )
-        return Key.from_Key_bundle(bundle)
+        return Key._from_key_bundle(bundle)
 
-    async def update_Key_attributes(
+    async def update_key(
         self,
         name: str,
         version: str,
-        content_type: Optional[str] = None,
+        key_ops: Optional[List[str]] = None,
         enabled: Optional[bool] = None,
         not_before: Optional[datetime] = None,
         expires: Optional[datetime] = None,
         tags: Optional[Dict[str, str]] = None,
         **kwargs: Mapping[str, Any]
     ) -> KeyBase:
-        """Updates the attributes associated with a specified Key in the key vault.
-
-        The UPDATE operation changes specified attributes of an existing stored Key.
-        Attributes that are not specified in the request are left unchanged. The value
-        of a Key itself cannot be changed. This operation requires the Keys/set permission.
-
-        :param str name: The name of the Key
-        :param str version: The version of the Key.
-        :param str content_type: Type of the Key value such as a password
+        """The update key operation changes specified attributes of a stored key
+        and can be applied to any key type and key version stored in Azure Key
+        Vault.
+        
+        In order to perform this operation, the key must already exist in the
+        Key Vault. Note: The cryptographic material of a key itself cannot be
+        changed. This operation requires the keys/update permission.
+        :param name: The name of key to update.
+        :type name
+        :param version: The version of the key to update.
+        :type version
+        :param key_ops: Json web key operations. For more information on
+         possible key operations, see JsonWebKeyOperation.
+        :type key_ops: list[str or
+         ~~azure.keyvault._generated.v7_0.models.JsonWebKeyOperation]
         :param enabled: Determines whether the object is enabled.
         :type enabled: bool
-        :param not_before: Not before date of the Key  in UTC
-        :type not_before: datetime.datetime
-        :param expires: Expiry date  of the Key in UTC.
+        :param expires: Expiry date of the key  in UTC.
         :type expires: datetime.datetime
-        :param tags: Application specific metadata in the form of key-value pairs.
-        :type tags: dict(str, str)
-        :returns: The created Key
-        :rtype: ~azure.keyvault.Keys._models.KeyBase
-        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to create the Key
-
+        :param not_before: Not before date of the key in UTC
+        :type not_before: datetime.datetime
+        :param tags: Application specific metadata in the form of key-value
+         pairs.
+        :type tags: Dict[str, str]
+        :returns: The updated key
+        :rtype: ~azure.keyvault.v7_0.models.Key
+        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        
         Example:
-            .. literalinclude:: ../tests/test_examples_keys_async_async.py
-                :start-after: [START update_Key_attributes]
-                :end-before: [END update_Key_attributes]
+            .. literalinclude:: ../tests/test_examples_keys_async.py
+                :start-after: [START update_key]
+                :end-before: [END update_key]
                 :language: python
                 :dedent: 4
-                :caption: Updates the attributes associated with a specified Key in the key vault
+                :caption: Updates a key in the key vault
         """
         if enabled is not None or not_before is not None or expires is not None:
             attributes = self._client.models.KeyBase(enabled=enabled, not_before=not_before, expires=expires)
         else:
             attributes = None
-        bundle = await self._client.update_Key(
+        bundle = await self._client.update_key(
             self.vault_url,
             name,
-            Key_version=version,
-            content_type=content_type,
+            key_version=version,
+            key_ops=key_ops,
+            key_attributes=attributes,
             tags=tags,
-            Key_attributes=attributes,
             error_map={404: ResourceNotFoundError},
         )
-        return KeyBase.from_Key_bundle(bundle)  # pylint: disable=protected-access
+        return Key._from_key_bundle(bundle)
 
-    async def list_Keys(self, **kwargs: Mapping[str, Any]) -> AsyncGenerator[KeyBase, None]:
-        """List Keys in the vault.
+    async def list_keys(self, **kwargs: Mapping[str, Any]) -> AsyncGenerator[KeyBase, None]:
+        # type: ( Mapping[str, Any]) -> Generator[KeyBase]
 
-        The Get Keys operation is applicable to the entire vault. However,
-        only the latest Key identifier and its attributes are provided in the
-        response. No Key values are returned and individual Key versions are
-        not listed in the response.  This operation requires the Keys/list permission.
-
-        :returns: An iterator like instance of Keys
-        :rtype:
-         typing.AsyncGenerator[~azure.keyvault.Keys._models.KeyBase]
-        :raises:
-         :class:`HttpRequestError<azure.core.HttpRequestError>`
-
-        Example:
-            .. literalinclude:: ../tests/test_examples_keys_async_async.py
-                :start-after: [START list_Keys]
-                :end-before: [END list_Keys]
-                :language: python
-                :dedent: 4
-                :caption: Lists all the Keys in the vault
-        """
-        max_results = kwargs.get("max_page_size")
-        pages = self._client.get_Keys(self.vault_url, maxresults=max_results)
-        async for item in pages:
-            yield KeyBase.from_Key_item(item)
-
-    async def list_Key_versions(
-        self, name: str, **kwargs: Mapping[str, Any]
-    ) -> AsyncGenerator[KeyBase, None]:
-        """List all versions of the specified Key.
-
-        The full Key identifier and attributes are provided in the response.
-        No values are returned for the Keys. This operation requires the
-        Keys/list permission.
-
-        :param str name: The name of the Key.
+        """List keys in the specified vault.
+        
+        Retrieves a list of the keys in the Key Vault as JSON Web Key
+        structures that contain the public part of a stored key. The LIST
+        operation is applicable to all key types, however only the base key
+        identifier, attributes, and tags are provided in the response.
+        Individual versions of a key are not listed in the response. This
+        operation requires the keys/list permission.
         :returns: An iterator like instance of Key
         :rtype:
-         typing.AsyncGenerator[~azure.keyvault.Keys._models.KeyBase]
-        :raises:
-         :class:`HttpRequestError<azure.core.HttpRequestError>`
-
+         typing.Generator[~azure.keyvault.keys._models.KeyBase]
+        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        
         Example:
-        .. literalinclude:: ../tests/test_examples_keys_async_async.py
-            :start-after: [START list_Key_versions]
-            :end-before: [END list_Key_versions]
-            :language: python
-            :dedent: 4
-            :caption: List all versions of the specified Key
-        """
-        max_results = kwargs.get("max_page_size")
-        pages = self._client.get_Key_versions(self.vault_url, name, maxresults=max_results)
-        async for item in pages:
-            yield KeyBase.from_Key_item(item)
-
-    async def backup_Key(self, name: str, **kwargs: Mapping[str, Any]) -> bytes:
-        """Backs up the specified Key.
-
-        Requests that a backup of the specified Key be downloaded to the
-        client. All versions of the Key will be downloaded. This operation
-        requires the Keys/backup permission.
-
-        :param str name: The name of the Key.
-        :returns: The raw bytes of the Key backup.
-        :rtype: bytes
-        :raises:
-         :class:azure.core.HttpRequestError
-
-         Example:
-            .. literalinclude:: ../tests/test_examples_keys_async_async.py
-                :start-after: [START backup_Key]
-                :end-before: [END backup_Key]
+            .. literalinclude:: ../tests/test_examples_keys_async.py
+                :start-after: [START list_keys]
+                :end-before: [END list_keys]
                 :language: python
                 :dedent: 4
-                :caption: Backs up the specified Key
+                :caption: List all keys in the vault
         """
-        backup_result = await self._client.backup_Key(self.vault_url, name, error_map={404: ResourceNotFoundError})
+        max_results = kwargs.get("max_page_size")
+        pages = self._client.get_keys(self.vault_url, maxresults=max_results)
+        async for item in pages:
+            yield KeyBase._from_key_item(item)
+
+    async def list_key_versions(self, name: str, **kwargs: Mapping[str, Any]) -> AsyncGenerator[KeyBase, None]:
+        """Retrieves a list of individual key versions with the same key name.
+        
+        The full key identifier, attributes, and tags are provided in the
+        response. This operation requires the keys/list permission.
+        
+        :param name: The name of the key.
+        :type name
+        :returns: An iterator like instance of Key
+        :rtype:
+         typing.Generator[~azure.keyvault.keys._models.KeyBase]
+        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        
+        Example:
+            .. literalinclude:: ../tests/test_examples_keys_async.py
+                :start-after: [START list_key_versions]
+                :end-before: [END list_key_versions]
+                :language: python
+                :dedent: 4
+                :caption: List all versions of the specified key
+        """
+        max_results = kwargs.get("max_page_size")
+        pages = self._client.get_key_versions(self.vault_url, name, maxresults=max_results)
+        async for item in pages:
+            yield KeyBase._from_key_item(item)
+
+    async def backup_key(self, name: str, **kwargs: Mapping[str, Any]) -> bytes:
+        """Requests that a backup of the specified key be downloaded to the
+        client.
+
+        The Key Backup operation exports a key from Azure Key Vault in a
+        protected form. Note that this operation does NOT return key material
+        in a form that can be used outside the Azure Key Vault system, the
+        returned key material is either protected to a Azure Key Vault HSM or
+        to Azure Key Vault itself. The intent of this operation is to allow a
+        client to GENERATE a key in one Azure Key Vault instance, BACKUP the
+        key, and then RESTORE it into another Azure Key Vault instance. The
+        BACKUP operation may be used to export, in protected form, any key type
+        from Azure Key Vault. Individual versions of a key cannot be backed up.
+        BACKUP / RESTORE can be performed within geographical boundaries only;
+        meaning that a BACKUP from one geographical area cannot be restored to
+        another geographical area. For example, a backup from the US
+        geographical area cannot be restored in an EU geographical area. This
+        operation requires the key/backup permission.
+        :param name: The name of the key.
+        :type name
+        :return: The raw bytes of the key backup.
+        :rtype: bytes
+        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+
+        Example:
+            .. literalinclude:: ../tests/test_examples_keys-async.py
+                :start-after: [START backup_key]
+                :end-before: [END backup_key]
+                :language: python
+                :dedent: 4
+                :caption: Backs up the specified key to the key vault
+        """
+        backup_result = await self._client.backup_key(self.vault_url, name, error_map={404: ResourceNotFoundError})
         return backup_result.value
 
-    async def restore_Key(self, backup: bytes, **kwargs: Mapping[str, Any]) -> KeyBase:
-        """Restores a backed up Key to a vault.
+    async def restore_key(self, backup: bytes, **kwargs: Mapping[str, Any]) -> KeyBase:
+        """Restores a backed up key to a vault.
 
-        Restores a backed up Key, and all its versions, to a vault. This
-        operation requires the Keys/restore permission.
+        Imports a previously backed up key into Azure Key Vault, restoring the
+        key, its key identifier, attributes and access control policies. The
+        RESTORE operation may be used to import a previously backed up key.
+        Individual versions of a key cannot be restored. The key is restored in
+        its entirety with the same key name as it had when it was backed up. If
+        the key name is not available in the target Key Vault, the RESTORE
+        operation will be rejected. While the key name is retained during
+        restore, the final key identifier will change if the key is restored to
+        a different vault. Restore will restore all versions and preserve
+        version identifiers. The RESTORE operation is subject to security
+        constraints: The target Key Vault must be owned by the same Microsoft
+        Azure Subscription as the source Key Vault The user must have RESTORE
+        permission in the target Key Vault. This operation requires the
+        keys/restore permission.
 
-        :param bytes backup: The raw bytes of the Key backup
-        :returns: The restored Key
-        :rtype: ~azure.keyvault.Keys._models.KeyBase
-        :raises:
-         :class:azure.core.HttpRequestError
-
-        Example:
-            .. literalinclude:: ../tests/test_examples_keys_async_async.py
-                :start-after: [START restore_Key]
-                :end-before: [END restore_Key]
-                :language: python
-                :dedent: 4
-                :caption: Restores a backed up Key to the vault
-        """
-        bundle = await self._client.restore_Key(self.vault_url, backup, error_map={409: ResourceExistsError})
-        return KeyBase.from_Key_bundle(bundle)
-
-    async def delete_Key(self, name: str, **kwargs: Mapping[str, Any]) -> DeletedKey:
-        """Deletes a Key from the vault.
-
-        The DELETE operation applies to any Key stored in Azure Key Vault.
-        DELETE cannot be applied to an individual version of a Key. This
-        operation requires the Keys/delete permission.
-
-        :param str name: The name of the Key
-        :returns: The deleted Key.
-        :rtype: ~azure.keyvault.Keys._models.DeletedKey
-        :raises: ~azure.core.exceptions.ClientRequestError, if client failed to delete the Key
+        :param backup: The raw bytes of the secret backup
+        :type backup: bytes
+        :returns: The restored key
+        :rtype: ~azure.keyvault.keys._models.Key
+        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
 
         Example:
-            .. literalinclude:: ../tests/test_examples_keys_async_async.py
-                :start-after: [START delete_Key]
-                :end-before: [END delete_Key]
+            .. literalinclude:: ../tests/test_examples_keys_async.py
+                :start-after: [START restore_key]
+                :end-before: [END restore_key]
                 :language: python
                 :dedent: 4
-                :caption: Deletes a Key
+                :caption: Restores a backed up key to the vault
         """
-        bundle = await self._client.delete_Key(self.vault_url, name, error_map={404: ResourceNotFoundError})
-        return DeletedKey.from_deleted_Key_bundle(bundle)
+        bundle = await self._client.restore_key(self.vault_url, backup, error_map={409: ResourceExistsError})
+        return KeyBase._from_key_bundle(bundle)
 
-    async def get_deleted_Key(self, name: str, **kwargs: Mapping[str, Any]) -> DeletedKey:
-        """Gets the specified deleted Key.
+    async def delete_key(self, name: str, **kwargs: Mapping[str, Any]) -> DeletedKey:
+        """Deletes a key of any type from storage in Azure Key Vault.
 
-        The Get Deleted Key operation returns the specified deleted Key
-        along with its attributes. This operation requires the Keys/get permission.
+        The delete key operation cannot be used to remove individual versions
+        of a key. This operation removes the cryptographic material associated
+        with the key, which means the key is not usable for Sign/Verify,
+        Wrap/Unwrap or Encrypt/Decrypt operations. This operation requires the
+        keys/delete permission.
 
-        :param str name: The name of the Key
-        :returns: The deleted Key.
-        :rtype: ~azure.keyvault.Keys._models.DeletedKey
-        :raises: ~azure.core.exceptions.ClientRequestError, if client failed to get the deleted Key
+        :param name: The name of the key to delete.
+        :type name
+        :returns: The deleted key
+        :rtype: ~azure.keyvault.keys._models.DeletedKey
+        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to delete the key
 
         Example:
-            .. literalinclude:: ../tests/test_examples_keys_async_async.py
-                :start-after: [START get_deleted_Key]
-                :end-before: [END get_deleted_Key]
+            .. literalinclude:: ../tests/test_examples_keys_async.py
+                :start-after: [START delete_key]
+                :end-before: [END delete_key]
                 :language: python
                 :dedent: 4
-                :caption: Gets the deleted Key
+                :caption: Deletes a key in the key vault
         """
-        bundle = await self._client.get_deleted_Key(self.vault_url, name, error_map={404: ResourceNotFoundError})
-        return DeletedKey.from_deleted_Key_bundle(bundle)
+        bundle = await self._client.delete_key(self.vault_url, name, error_map={404: ResourceNotFoundError})
+        return DeletedKey._from_deleted_key_bundle(bundle)
+
+    async def get_deleted_key(self, name: str, **kwargs: Mapping[str, Any]) -> DeletedKey:
+        """Gets the public part of a deleted key.
+
+        The Get Deleted Key operation is applicable for soft-delete enabled
+        vaults. While the operation can be invoked on any vault, it will return
+        an error if invoked on a non soft-delete enabled vault. This operation
+        requires the keys/get permission.
+
+        :param name: The name of the key.
+        :type name
+        :returns: The deleted key
+        :rtype: ~azure.keyvault.keys._models.DeletedKey
+        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+
+        Example:
+            .. literalinclude:: ../tests/test_examples_keys_async.py
+                :start-after: [START get_deleted_key]
+                :end-before: [END get_deleted_key]
+                :language: python
+                :dedent: 4
+                :caption: Retrieves a deleted key from the key vault
+        """
+        bundle = await self._client.get_deleted_key(self.vault_url, name, error_map={404: ResourceNotFoundError})
+        return DeletedKey._from_deleted_key_bundle(bundle)
 
     async def list_deleted_Keys(self, **kwargs: Mapping[str, Any]) -> AsyncGenerator[DeletedKey, None]:
-        """Lists deleted Keys of the vault.
+        """Lists the deleted keys in the specified vault.
 
-        The Get Deleted Keys operation returns the Keys that have
-        been deleted for a vault enabled for soft-delete. This
-        operation requires the Keys/list permission.
+        Retrieves a list of the keys in the Key Vault as JSON Web Key
+        structures that contain the public part of a deleted key. This
+        operation includes deletion-specific information. The Get Deleted Keys
+        operation is applicable for vaults enabled for soft-delete. While the
+        operation can be invoked on any vault, it will return an error if
+        invoked on a non soft-delete enabled vault. This operation requires the
+        keys/list permission.
 
-        :returns: An iterator like instance of DeletedKeys
+        :returns: An iterator like instance of DeletedKey
         :rtype:
-         typing.AsyncGenerator[~azure.keyvault.Keys._models.DeletedKey]
-
+         typing.Generator[~azure.keyvault.keys._models.DeletedKey]
+        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        
         Example:
-            .. literalinclude:: ../tests/test_examples_keys_async_async.py
-                :start-after: [START list_deleted_Keys]
-                :end-before: [END list_deleted_Keys]
+            .. literalinclude:: ../tests/test_examples_keys_async.py
+                :start-after: [START list_deleted_keys]
+                :end-before: [END list_deleted_keys]
                 :language: python
                 :dedent: 4
-                :caption: Lists the deleted Keys of the vault
+                :caption: List all the deleted keys in the vault
         """
         max_results = kwargs.get("max_page_size")
-        pages = self._client.get_deleted_Keys(self.vault_url, maxresults=max_results)
+        pages = self._client.get_deleted_keys(self.vault_url, maxresults=max_results)
         async for item in pages:
-            yield DeletedKey.from_deleted_Key_item(item)
+            yield DeletedKey._from_deleted_key_item(item)
 
-    async def purge_deleted_Key(self, name: str, **kwargs: Mapping[str, Any]) -> None:
-        """Permanently deletes the specified Key.
-
-        The purge deleted Key operation removes the Key permanently, without the
-        possibility of recovery. This operation can only be enabled on a soft-delete enabled
-        vault. This operation requires the Keys/purge permission.
-
-        :param str name: The name of the Key
+    async def purge_deleted_key(self, name: str, **kwargs: Mapping[str, Any]) -> None:
+        """Permanently deletes the specified key.
+        
+        The Purge Deleted Key operation is applicable for soft-delete enabled
+        vaults. While the operation can be invoked on any vault, it will return
+        an error if invoked on a non soft-delete enabled vault. This operation
+        requires the keys/purge permission.
+        
+        :param name: The name of the key
+        :type name
         :returns: None
-        :raises: ~azure.core.exceptions.ClientRequestError, if client failed to return the purged Key
-
+        :rtype: None
+        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        
         Example:
-            .. literalinclude:: ../tests/test_examples_keys_async_async.py
-                :start-after: [START purge_deleted_Key]
-                :end-before: [END purge_deleted_Key]
+            .. literalinclude:: ../tests/test_examples_keys_async.py
+                :start-after: [START purge_deleted_key]
+                :end-before: [END purge_deleted_key]
                 :language: python
                 :dedent: 4
-                :caption: Restores a backed up Key to the vault
+                :caption: Permanently deletes the specified key
         """
-        await self._client.purge_deleted_Key(self.vault_url, name)
+        await self._client.purge_deleted_key(self.vault_url, name)
 
-    async def recover_deleted_Key(self, name: str, **kwargs: Mapping[str, Any]) -> KeyBase:
-        """Recovers the deleted Key to the latest version.
-
-        Recovers the deleted Key in the specified vault.
-        This operation can only be performed on a soft-delete enabled
-        vault. This operation requires the Keys/recover permission.
-
-        :param str name: The name of the Key
-        :returns: The recovered deleted Key
-        :rtype: ~azure.keyvault.Keys._models.KeyBase
-        :raises: ~azure.core.exceptions.ClientRequestError, if client failed to recover the deleted Key
-
+    async def recover_deleted_key(self, name: str, **kwargs: Mapping[str, Any]) -> KeyBase:
+        """Recovers the deleted key to its latest version.
+        
+        The Recover Deleted Key operation is applicable for deleted keys in
+        soft-delete enabled vaults. It recovers the deleted key back to its
+        latest version under /keys. An attempt to recover an non-deleted key
+        will return an error. Consider this the inverse of the delete operation
+        on soft-delete enabled vaults. This operation requires the keys/recover
+        permission.
+        
+        :param name: The name of the deleted key.
+        :type name: str
+        :returns: The recovered deleted key
+        :rtype: ~azure.keyvault.keys._models.Key
+        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        
         Example:
-            .. literalinclude:: ../tests/test_examples_keys_async_async.py
-                :start-after: [START recover_deleted_Key]
-                :end-before: [END recover_deleted_Key]
+            .. literalinclude:: ../tests/test_examples_keys_async.py
+                :start-after: [START recover_deleted_key]
+                :end-before: [END recover_deleted_key]
                 :language: python
                 :dedent: 4
-                :caption: Restores a backed up Key to the vault
+                :caption: Recovers the specified soft-deleted key
         """
-        bundle = await self._client.recover_deleted_Key(self.vault_url, name)
-        return KeyBase.from_Key_bundle(bundle)
+        bundle = await self._client.recover_deleted_key(self.vault_url, name)
+        return KeyBase._from_key_bundle(bundle)

@@ -8,7 +8,5 @@
 from .keys._client import KeyClient
 from ..keys._models import Key, KeyBase, DeletedKey
 
-__all__ = ['KeyClient',
-           'KeyBase',
-           'Key',
-           'DeletedKey']
+__all__ = ["KeyClient", "KeyBase", "Key", "DeletedKey"]
+
