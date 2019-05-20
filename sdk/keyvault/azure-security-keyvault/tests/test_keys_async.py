@@ -3,18 +3,51 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
-
-from devtools_testutils import ResourceGroupPreparer
-from azure.keyvault.keys import KeyClient
+from azure.core import ResourceNotFoundError
+from azure.security.keyvault.keys import KeyClient
 from devtools_testutils import ResourceGroupPreparer
 from keyvault_preparer import KeyVaultPreparer
 from keyvault_testcase import KeyvaultTestCase
 from dateutil import parser as date_parse
+from azure.security.keyvault.aio.vault_client import VaultClient
 
+import asyncio
+import functools
 import time
+
+def await_prepared_test(test_fn):
+    """Synchronous wrapper for async test methods. Used to avoid making changes
+       upstream to AbstractPreparer (which doesn't await the functions it wraps)
+    """
+    @functools.wraps(test_fn)
+    def run(test_class_instance, *args, **kwargs):
+        # TODO: this is a workaround for KeyVaultPreparer creating a sync client
+        vault_client = kwargs.get("vault_client")
+        credentials = test_class_instance.settings.get_credentials(resource="https://vault.azure.net")
+        aio_client = VaultClient(vault_client.vault_url, credentials)
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(test_fn(test_class_instance, vault_client=aio_client))
+    return run
 
 
 class KeyVaultKeyTest(KeyvaultTestCase):
+    
+    async def _poll_until_resource_found(self, fn, secret_names, max_retries=20, retry_delay=6):
+        """polling helper for live tests because some operations take an unpredictable amount of time to complete"""
+
+        if not self.is_live:
+            return
+
+        for i in range(max_retries):
+            await asyncio.sleep(retry_delay)
+            try:
+                for name in secret_names:
+                    # TODO: this enables polling get_secret but it'd be better if caller applied args to fn
+                    await fn(name, version="")
+                break
+            except ResourceNotFoundError:
+                if i == max_retries - 1:
+                    raise
 
     def _assert_key_attributes_equal(self, k1, k2):
         self.assertEqual(k1.name, k2.name)
@@ -41,10 +74,10 @@ class KeyVaultKeyTest(KeyvaultTestCase):
         self.assertTrue(key_attributes.created and key_attributes.updated,
                         'Missing required date attributes.')
 
-    def _update_key(self, client, key):
+    async def _update_key(self, client, key):
         expires = date_parse.parse('2050-01-02T08:00:00.000Z')
         tags = {'foo': 'updated tag'}
-        key_bundle = client.update_key(
+        key_bundle = await client.update_key(
             key.name, key.version,
             expires=expires,
             tags=tags)
@@ -53,22 +86,23 @@ class KeyVaultKeyTest(KeyvaultTestCase):
         self.assertNotEqual(key.updated, key_bundle.updated)
         return key_bundle
 
-    def _validate_key_list(self, keys, expected):
-        for key in keys:
+    async def _validate_key_list(self, keys, expected):
+        async for key in keys:  # why async here?   
             if key.name in expected.keys():
                 del expected[key.name]
         self.assertEqual(len(expected), 0)
 
     @ResourceGroupPreparer()
     @KeyVaultPreparer(enable_soft_delete=True)
-    def test_key_crud_operations(self, vault_client, **kwargs):
+    @await_prepared_test
+    async def test_key_crud_operations(self, vault_client, **kwargs):
 
         self.assertIsNotNone(vault_client)
         client = vault_client.keys
         key_name = 'crud-test-key'
 
         # create key
-        created_key = client.create_key(key_name, 'RSA')
+        created_key = await client.create_key(key_name, 'RSA')
         self.assertIsNotNone(created_key.version)
         self._validate_rsa_key_bundle(created_key, vault_client.vault_url, key_name, 'RSA')
         # assert it creates a version on creation of the key
@@ -85,13 +119,13 @@ class KeyVaultKeyTest(KeyvaultTestCase):
             "unwrapKey"
         ]
         tags = {"purpose": "unit test", "test name ": "CreateGetDeleteKeyTest"}
-        created_key = client.create_key(key_name, 'RSA', size=key_size, key_ops=key_ops, tags=tags)
+        created_key = await client.create_key(key_name, 'RSA', size=key_size, key_ops=key_ops, tags=tags)
         self.assertTrue(created_key.version and created_key.tags, 'Missing the optional key attributes.')
         self.assertEqual(tags, created_key.tags)
         self._validate_rsa_key_bundle(created_key, vault_client.vault_url, key_name, 'RSA')
 
         # get the created key with version
-        key = client.get_key(key_name, created_key.version)
+        key = await client.get_key(key_name, created_key.version)
         self.assertEqual(key.version, created_key.version)
         self._assert_key_attributes_equal(created_key, key)
 
@@ -102,10 +136,10 @@ class KeyVaultKeyTest(KeyvaultTestCase):
         if self.is_live:
             # wait to ensure the key's update time won't equal its creation time
             time.sleep(1)
-        updated = self._update_key(client, created_key)
+        self._update_key(client, created_key)
 
         # delete the new key
-        deleted_key = client.delete_key(key_name)
+        deleted_key = await client.delete_key(key_name)
         self.assertIsNotNone(deleted_key)
         self.assertEqual(created_key.key_material, deleted_key.key_material)
         self.assertEqual(deleted_key.id, created_key.id)
@@ -116,13 +150,14 @@ class KeyVaultKeyTest(KeyvaultTestCase):
             # wait to ensure the key has been deleted
             time.sleep(20)
         # get the deleted key when soft deleted enabled
-        deleted_key = client.get_deleted_key(deleted_key.name)
+        deleted_key = await client.get_deleted_key(deleted_key.name)
         self.assertIsNotNone(deleted_key)
         self.assertEqual(created_key.id, deleted_key.id)
 
     @ResourceGroupPreparer()
     @KeyVaultPreparer()
-    def test_backup_restore(self, vault_client, **kwargs):
+    @await_prepared_test
+    async def test_backup_restore(self, vault_client, **kwargs):
 
         self.assertIsNotNone(vault_client)
         client = vault_client.keys
@@ -130,14 +165,14 @@ class KeyVaultKeyTest(KeyvaultTestCase):
         key_type = 'RSA'
 
         # create key
-        created_bundle = client.create_key(key_name, key_type)
+        created_bundle = await client.create_key(key_name, key_type)
 
         # backup key
-        key_backup = client.backup_key(created_bundle.name)
+        key_backup = await client.backup_key(created_bundle.name)
         self.assertIsNotNone(key_backup, 'key_backup')
 
         # delete key
-        client.delete_key(created_bundle.name)
+        await client.delete_key(created_bundle.name)
 
         # restore key
         restored = client.restore_key(key_backup)
@@ -145,7 +180,8 @@ class KeyVaultKeyTest(KeyvaultTestCase):
 
     @ResourceGroupPreparer()
     @KeyVaultPreparer()
-    def test_key_list(self, vault_client, **kwargs):
+    @await_prepared_test
+    async def test_key_list(self, vault_client, **kwargs):
 
         self.assertIsNotNone(vault_client)
         client = vault_client.keys
@@ -156,10 +192,8 @@ class KeyVaultKeyTest(KeyvaultTestCase):
         # create many keys
         for x in range(0, max_keys):
             key_name = 'key{}'.format(x)
-            key = None
-            while not key:
-                key = client.create_key(key_name, 'RSA')
-                expected[key.name] = key
+            key = client.create_key(key_name, 'RSA')
+            expected[key.name] = key
 
         # list keys
         result = list(client.list_keys(max_page_size=max_keys))
@@ -167,7 +201,8 @@ class KeyVaultKeyTest(KeyvaultTestCase):
 
     @ResourceGroupPreparer()
     @KeyVaultPreparer()
-    def test_list_versions(self, vault_client, **kwargs):
+    @await_prepared_test
+    async def test_list_versions(self, vault_client, **kwargs):
 
         self.assertIsNotNone(vault_client)
         client = vault_client.keys
@@ -179,10 +214,8 @@ class KeyVaultKeyTest(KeyvaultTestCase):
 
         # create many key versions
         for _ in range(0, max_keys):
-            key = None
-            while not key:
-                key = client.create_key(key_name, 'RSA')
-                expected[key.id] = key
+            key = client.create_key(key_name, 'RSA')
+            expected[key.id] = key
 
         result = client.list_key_versions(key_name, max_page_size=max_page_size)
 
@@ -196,7 +229,8 @@ class KeyVaultKeyTest(KeyvaultTestCase):
 
     @ResourceGroupPreparer()
     @KeyVaultPreparer(enable_soft_delete=True)
-    def test_recover_purge(self, vault_client, **kwargs):
+    @await_prepared_test
+    async def test_recover_purge(self, vault_client, **kwargs):
 
         self.assertIsNotNone(vault_client)
         client = vault_client.keys
@@ -205,16 +239,16 @@ class KeyVaultKeyTest(KeyvaultTestCase):
         # create keys to recover
         for i in range(0, self.list_test_size):
             key_name = self.get_resource_name('keyrec{}'.format(str(i)))
-            keys[key_name] = client.create_key(key_name, 'RSA')
+            keys[key_name] = await client.create_key(key_name, 'RSA')
 
         # create keys to purge
         for i in range(0, self.list_test_size):
             key_name = self.get_resource_name('keyprg{}'.format(str(i)))
-            keys[key_name] = client.create_key(key_name, 'RSA')
+            keys[key_name] = await client.create_key(key_name, 'RSA')
 
         # delete all keys
         for key_name in keys.keys():
-            client.delete_key(key_name)
+            await client.delete_key(key_name)
 
         if self.is_live:
             time.sleep(20)
@@ -226,13 +260,13 @@ class KeyVaultKeyTest(KeyvaultTestCase):
 
         # recover select keys
         for key_name in [s for s in keys.keys() if s.startswith('keyrec')]:
-            recovered_key = client.recover_deleted_key(key_name)
+            recovered_key = await client.recover_deleted_key(key_name)
             expected_key = keys[key_name]
             self._assert_key_attributes_equal(expected_key, recovered_key)
 
         # purge select keys
         for key_name in [s for s in keys.keys() if s.startswith('keyprg')]:
-            client.purge_deleted_key(key_name)
+            await client.purge_deleted_key(key_name)
 
         if not self.is_playback():
             time.sleep(20)
