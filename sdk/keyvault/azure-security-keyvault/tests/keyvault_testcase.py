@@ -1,6 +1,6 @@
 from azure_devtools.scenario_tests import GeneralNameReplacer
 from devtools_testutils import AzureMgmtTestCase
-from azure.keyvault.secrets import SecretClient
+from azure.security.keyvault.keys import KeyClient
 
 
 class KeyvaultTestCase(AzureMgmtTestCase):

@@ -4,7 +4,6 @@
 # license information.
 # --------------------------------------------------------------------------
 from azure.core import ResourceNotFoundError
-from azure.security.keyvault.keys import KeyClient
 from devtools_testutils import ResourceGroupPreparer
 from keyvault_preparer import KeyVaultPreparer
 from keyvault_testcase import KeyvaultTestCase
