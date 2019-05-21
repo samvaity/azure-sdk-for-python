@@ -4,12 +4,11 @@
 # license information.
 # --------------------------------------------------------------------------
 from typing import TYPE_CHECKING
+from typing import Any, Mapping, Optional, AsyncGenerator, Dict, List
+from datetime import datetime
 
-from typing import Any, Mapping, Optional, AsyncGenerator, Dict
-
-from azure.core.configuration import Configuration
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
-from azure.core.pipeline.policies import UserAgentPolicy, AsyncRetryPolicy, AsyncRedirectPolicy
+# from azure.core.pipeline.policies import UserAgentPolicy, AsyncRetryPolicy, AsyncRedirectPolicy
 from azure.core.pipeline.transport import AsyncioRequestsTransport
 from azure.core.pipeline import AsyncPipeline
 
@@ -17,11 +16,10 @@ from azure.security.keyvault._internal import _BearerTokenCredentialPolicy
 from azure.security.keyvault._generated import KeyVaultClientAsync
 
 from ...keys._models import Key, DeletedKey, KeyBase
-from datetime import datetime
 
 # TODO: update all returns and raises
 if TYPE_CHECKING:
-    from typing import Any, Mapping, Optional, AsyncGenerator, Dict, List
+    from azure.core.configuration import Configuration
 
 
 class KeyClient:
@@ -156,7 +154,7 @@ class KeyClient:
         :returns: The created key
         :rtype: ~azure.keyvault.keys._models.Key
         :raises: ~azure.core.exceptions.ClientRequestError if the client failed to create the key
-        
+
         Example:
             .. literalinclude:: ../tests/test_examples_keys_async.py
                 :start-after: [START create_key]

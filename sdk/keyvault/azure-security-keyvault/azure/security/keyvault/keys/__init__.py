@@ -3,8 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
-from ._client import KeyClient
+# from ._client import KeyClient
 from ._models import Key, KeyBase, DeletedKey
 
 # TODO:
-__all__ = ["DeletedKey", "Key", "KeyBase", "KeyClient"]
+__all__ = ["DeletedKey", "Key", "KeyBase"]
