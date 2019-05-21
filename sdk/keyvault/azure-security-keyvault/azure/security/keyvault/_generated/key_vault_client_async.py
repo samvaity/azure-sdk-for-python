@@ -70,9 +70,9 @@ class KeyVaultClientAsync(MultiApiClientMixin):
         api_version = self._get_api_version(None)
 
         if api_version == V7_0_VERSION:
-            from ..._generated.v7_0 import models as impl_models
+            from .v7_0 import models as impl_models
         elif api_version == V2016_10_01_VERSION:
-            from ..._generated.v2016_10_01 import models as impl_models
+            from .v2016_10_01 import models as impl_models
         else:
             raise NotImplementedError("APIVersion {} is not available".format(api_version))
         return impl_models

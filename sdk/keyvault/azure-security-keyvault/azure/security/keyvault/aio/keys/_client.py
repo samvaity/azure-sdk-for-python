@@ -5,16 +5,16 @@
 # --------------------------------------------------------------------------
 from typing import TYPE_CHECKING
 
+from typing import Any, Mapping, Optional, AsyncGenerator, Dict
+
 from azure.core.configuration import Configuration
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.core.pipeline.policies import UserAgentPolicy, AsyncRetryPolicy, AsyncRedirectPolicy
 from azure.core.pipeline.transport import AsyncioRequestsTransport
 from azure.core.pipeline import AsyncPipeline
 
-from azure.keyvault._internal import _BearerTokenCredentialPolicy
+from azure.security.keyvault._internal import _BearerTokenCredentialPolicy
 from azure.security.keyvault._generated import KeyVaultClientAsync
-
-# from .._generated.v7_0.models import KeyAttributes as _KeyAttributes
 
 from ...keys._models import Key, DeletedKey, KeyBase
 from datetime import datetime
@@ -229,7 +229,7 @@ class KeyClient:
                 :caption: Updates a key in the key vault
         """
         if enabled is not None or not_before is not None or expires is not None:
-            attributes = self._client.models.KeyBase(enabled=enabled, not_before=not_before, expires=expires)
+            attributes = self._client.models.KeyAttributes(enabled=enabled, not_before=not_before, expires=expires)
         else:
             attributes = None
         bundle = await self._client.update_key(
