@@ -62,7 +62,7 @@ class KeyClient:
         return config
 
     def __init__(self, vault_url, credentials, config=None, **kwargs):
-        # type: (str, Any, Configuration, HttpTransport, Mapping[str, Any]) -> None
+        # type: (str, Any, Configuration, Mapping[str, Any]) -> None
         # TODO: update type hint for credentials
         if not credentials:
             raise ValueError("credentials")
@@ -127,7 +127,7 @@ class KeyClient:
     def create_key(
         self, name, key_type, key_ops=None, enabled=None, expires=None, not_before=None, tags=None, **kwargs
     ):
-        # type: (str, str, Optional[int], Optional[List[str]], Optional[bool], Optional[datetime], Optional[datetime], Optional[Dict[str, str]], Optional[str], Mapping[str, Any]) -> Key
+        # type: (str, Optional[str], Optional[int], Optional[List[str]], Optional[bool], Optional[datetime], Optional[datetime], Optional[Dict[str, str]], Optional[str], Mapping[str, Any]) -> Key
         """Creates a new key, stores it, then returns key attributes to the client.
         
         The create key operation can be used to create any key type in Azure
@@ -136,7 +136,11 @@ class KeyClient:
         
         :param name: The name for the new key. The system will generate
          the version name for the new key.
-        :type name
+        :type name: str
+        :param key_type: The type of key to create. For valid values, see
+         JsonWebKeyType. Possible values include: 'EC', 'EC-HSM', 'RSA',
+         'RSA-HSM', 'oct'
+        :type key_type: str or ~azure.keyvault._generated.v7_0.models.JsonWebKeyType
         :param key_ops: Supported key operations.
         :type key_ops: list[str or
          ~~azure.keyvault._generated.v7_0.models.JsonWebKeyOperation]
@@ -151,7 +155,7 @@ class KeyClient:
         :type tags: Dict[str, str]
         :returns: The created key
         :rtype: ~azure.keyvault.keys._models.Key
-        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to create the key
+        :raises: ~azure.core.exceptions.HttpResponseError if the client failed to create the key
         
         Example:
             .. literalinclude:: ../tests/test_examples_keys.py
@@ -162,7 +166,7 @@ class KeyClient:
                 :caption: Creates a key in the key vault
         """
         return self._create_key(
-            name, key_type, key_ops=key_ops, enabled=enabled, expires=expires, not_before=not_before, tags=tags
+            name, key_type=key_type, key_ops=key_ops, enabled=enabled, expires=expires, not_before=not_before, tags=tags
         )
 
     def create_rsa_key(
@@ -199,7 +203,7 @@ class KeyClient:
         :type tags: Dict[str, str]
         :returns: The created key
         :rtype: ~azure.keyvault.keys._models.Key
-        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to create the key
+        :raises: ~azure.core.exceptions.HttpResponseError if the client failed to create the key
         
         Example:
             .. literalinclude:: ../tests/test_examples_keys.py
@@ -256,7 +260,7 @@ class KeyClient:
         :type tags: Dict[str, str]
         :returns: The created key
         :rtype: ~azure.keyvault.keys._models.Key
-        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to create the key
+        :raises: ~azure.core.exceptions.HttpResponseError if the client failed to create the key
         
         Example:
             .. literalinclude:: ../tests/test_examples_keys.py
@@ -284,7 +288,7 @@ class KeyClient:
         :type name
         :returns: The deleted key
         :rtype: ~azure.keyvault.keys._models.DeletedKey
-        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to delete the key
+        :raises: ~azure.core.exceptions.HttpResponseError if the client failed to delete the key
         
         Example:
             .. literalinclude:: ../tests/test_examples_keys.py
@@ -323,7 +327,7 @@ class KeyClient:
         :type version
         :returns: Key
         :rtype: ~azure.keyvault.keys._models.Key
-        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        :raises: ~azure.core.exceptions.HttpResponseError if the client failed to retrieve the key
         
         Example:
             .. literalinclude:: ../tests/test_examples_keys.py
@@ -366,7 +370,7 @@ class KeyClient:
         :type name
         :returns: The deleted key
         :rtype: ~azure.keyvault.keys._models.DeletedKey
-        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        :raises: ~azure.core.exceptions.HttpResponseError if the client failed to retrieve the key
         
         Example:
             .. literalinclude:: ../tests/test_examples_keys.py
@@ -405,7 +409,7 @@ class KeyClient:
         :returns: An iterator like instance of DeletedKey
         :rtype:
          typing.Generator[~azure.keyvault.keys._models.DeletedKey]
-        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        :raises: ~azure.core.exceptions.HttpResponseError if the client failed to retrieve the key
         
         Example:
             .. literalinclude:: ../tests/test_examples_keys.py
@@ -435,7 +439,7 @@ class KeyClient:
         :returns: An iterator like instance of Key
         :rtype:
          typing.Generator[~azure.keyvault.keys._models.KeyBase]
-        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        :raises: ~azure.core.exceptions.HttpResponseError if the client failed to retrieve the key
         
         Example:
             .. literalinclude:: ../tests/test_examples_keys.py
@@ -462,7 +466,7 @@ class KeyClient:
         :returns: An iterator like instance of Key
         :rtype:
          typing.Generator[~azure.keyvault.keys._models.KeyBase]
-        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        :raises: ~azure.core.exceptions.HttpResponseError if the client failed to retrieve the key
         
         Example:
             .. literalinclude:: ../tests/test_examples_keys.py
@@ -491,7 +495,7 @@ class KeyClient:
         :type name
         :returns: None
         :rtype: None
-        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        :raises: ~azure.core.exceptions.HttpResponseError if the client failed to retrieve the key
         
         Example:
             .. literalinclude:: ../tests/test_examples_keys.py
@@ -528,7 +532,7 @@ class KeyClient:
         :type name: str
         :returns: The recovered deleted key
         :rtype: ~azure.keyvault.keys._models.Key
-        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        :raises: ~azure.core.exceptions.HttpResponseError if the client failed to retrieve the key
         
         Example:
             .. literalinclude:: ../tests/test_examples_keys.py
@@ -584,7 +588,7 @@ class KeyClient:
         :type tags: Dict[str, str]
         :returns: The updated key
         :rtype: ~azure.keyvault.v7_0.models.Key
-        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        :raises: ~azure.core.exceptions.HttpResponseError if the client failed to retrieve the key
         
         Example:
             .. literalinclude:: ../tests/test_examples_keys.py
@@ -642,7 +646,7 @@ class KeyClient:
         :type name
         :return: The raw bytes of the key backup.
         :rtype: bytes
-        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        :raises: ~azure.core.exceptions.HttpResponseError if the client failed to retrieve the key
         
         Example:
             .. literalinclude:: ../tests/test_examples_keys.py
@@ -692,7 +696,7 @@ class KeyClient:
         :type backup: bytes
         :returns: The restored key
         :rtype: ~azure.keyvault.keys._models.Key
-        :raises: ~azure.core.exceptions.ClientRequestError if the client failed to retrieve the key
+        :raises: ~azure.core.exceptions.HttpResponseError if the client failed to retrieve the key
         
         Example:
             .. literalinclude:: ../tests/test_examples_keys.py
