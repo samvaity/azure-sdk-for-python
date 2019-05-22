@@ -16,6 +16,7 @@ from azure.security.keyvault._internal import _BearerTokenCredentialPolicy
 from .._generated import KeyVaultClient
 from ._models import Key, KeyBase, DeletedKey
 
+
 class KeyClient:
     """KeyClient defines a high level interface for
     managing keys in the specified vault.
@@ -51,7 +52,7 @@ class KeyClient:
         return config
 
     def __init__(self, vault_url, credentials, config=None, api_version=None, **kwargs):
-        # type: (str, Any, Configuration, Mapping[str, Any]) -> None
+        # type: (str, Any, Configuration, Optional[str], Mapping[str, Any]) -> None
         # TODO: update type hint for credentials
         if not credentials:
             raise ValueError("credentials")
@@ -104,6 +105,7 @@ class KeyClient:
             attributes = self._client.models.KeyAttributes(enabled=enabled, not_before=not_before, expires=expires)
         else:
             attributes = None
+
         bundle = self._client.create_key(
             self.vault_url, name, key_type, size, key_attributes=attributes, key_ops=key_ops, tags=tags, curve=curve
         )
@@ -112,7 +114,7 @@ class KeyClient:
     def create_key(
         self, name, key_type, key_ops=None, enabled=None, expires=None, not_before=None, tags=None, **kwargs
     ):
-        # type: (str, Optional[str], Optional[int], Optional[List[str]], Optional[bool], Optional[datetime], Optional[datetime], Optional[Dict[str, str]], Optional[str], Mapping[str, Any]) -> Key
+        # type: (str, str, Optional[List[str]], Optional[bool], Optional[datetime], Optional[datetime], Optional[Dict[str, str]], Optional[str], Mapping[str, Any]) -> Key
         """Creates a new key, stores it, then returns key attributes to the client.
         
         The create key operation can be used to create any key type in Azure
