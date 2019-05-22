@@ -157,7 +157,7 @@ class KeyClient:
         )
 
     def create_rsa_key(
-        self, name, key_type, size, key_ops=None, enabled=None, expires=None, not_before=None, tags=None, **kwargs
+        self, name, key_type, size=None, key_ops=None, enabled=None, expires=None, not_before=None, tags=None, **kwargs
     ):
         # type: (str, str, Optional[int], Optional[List[str]], Optional[bool], Optional[datetime], Optional[datetime], Optional[Dict[str, str]], Mapping[str, Any]) -> Key
         """Creates a new RSA type key, stores it, then returns key attributes to the client.
@@ -212,7 +212,7 @@ class KeyClient:
         )
 
     def create_ec_key(
-        self, name, key_type, curve, key_ops=None, enabled=None, expires=None, not_before=None, tags=None, **kwargs
+        self, name, key_type, curve=None, key_ops=None, enabled=None, expires=None, not_before=None, tags=None, **kwargs
     ):
         # type: (str, str, Optional[List[str]], Optional[bool], Optional[datetime], Optional[datetime], Optional[Dict[str, str]], Optional[str], Mapping[str, Any]) -> Key
         """Creates a new Elliptic curve type key, stores it, then returns key attributes to the client.
@@ -228,7 +228,7 @@ class KeyClient:
          JsonWebKeyType. Possible values include: 'EC', 'EC-HSM', 'RSA',
          'RSA-HSM', 'oct'
         :type key_type: str or ~azure.keyvault._generated.v7_0.models.JsonWebKeyType
-        :param curve: Elliptic curve name. For valid values, see
+        :param curve: Elliptic curve name. If none then defaults to 'P-256'. For valid values, see
          JsonWebKeyCurveName. Possible values include: 'P-256', 'P-384',
          'P-521', 'SECP256K1'
         :type curve: str or
@@ -288,8 +288,8 @@ class KeyClient:
         bundle = self._client.delete_key(self.vault_url, name, error_map={404: ResourceNotFoundError})
         return DeletedKey._from_deleted_key_bundle(bundle)
 
-    def get_key(self, name, version, **kwargs):
-        # type: (str, str, Mapping[str, Any]) -> Key
+    def get_key(self, name, version=None, **kwargs):
+        # type: (str, Optional[str], Mapping[str, Any]) -> Key
         """Gets the public part of a stored key.
         
         The get key operation is applicable to all key types. If the requested

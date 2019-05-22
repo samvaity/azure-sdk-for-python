@@ -39,25 +39,22 @@ class KeyClientTests(KeyVaultTestCase):
 
     def _create_ec_key(self, client, key_name, key_type):
         # create ec key with optional arguments
-        key_curve = "P-256"
         enabled = True
         tags = {"purpose": "unit test", "test name": "CreateECKeyTest"}
-        created_key = client.create_ec_key(key_name, key_type=key_type, curve=key_curve, enabled=enabled)
+        created_key = client.create_ec_key(key_name, key_type=key_type, enabled=enabled)
         self.assertTrue(created_key.enabled, "Missing the optional key attributes.")
         self.assertEqual(enabled, created_key.enabled)
-        self.assertEqual(key_curve, created_key.curve)
         self._validate_ec_key_bundle(created_key, client.vault_url, key_name, key_type)
         return created_key
 
-    def _validate_ec_key_bundle(self, key_attributes, vault, key_name, kty, key_ops=None):
+    def _validate_ec_key_bundle(self, key_attributes, vault, key_name, kty):
+        key_curve = "P-256"
         prefix = "/".join(s.strip("/") for s in [vault, "keys", key_name])
-        key_ops = key_ops or ["encrypt", "decrypt", "sign", "verify", "wrapKey", "unwrapKey"]
         key = key_attributes.key_material
         kid = key_attributes.id
+        self.assertEqual(key_curve, key.crv)
         self.assertTrue(kid.index(prefix) == 0, "Key Id should start with '{}', but value is '{}'".format(prefix, kid))
         self.assertEqual(key.kty, kty, "kty should by '{}', but is '{}'".format(key, key.kty))
-        # self.assertTrue(key.n and key.e, 'Bad RSA public material.') change to ec
-        self.assertEqual(key_ops, key.key_ops, "keyOps should be '{}', but is '{}'".format(key_ops, key.key_ops))
         self.assertTrue(key_attributes.created and key_attributes.updated, "Missing required date attributes.")
 
     def _validate_rsa_key_bundle(self, key_attributes, vault, key_name, kty, key_ops=None):
@@ -93,9 +90,8 @@ class KeyClientTests(KeyVaultTestCase):
         self.assertIsNotNone(vault_client)
         client = vault_client.keys
 
-        # TODO: failing with Serialization error
         # create ec key
-        # created_ec_key = self._create_ec_key(client, key_name="crud-ec-key", key_type="EC")
+        created_ec_key = self._create_ec_key(client, key_name="crud-ec-key", key_type="EC")
 
         # create rsa key
         created_rsa_key = self._create_rsa_key(client, key_name="crud-rsa-key", key_type="RSA")
