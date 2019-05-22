@@ -37,17 +37,16 @@ class KeyClientTests(KeyVaultTestCase):
         self._validate_rsa_key_bundle(created_key, client.vault_url, key_name, key_type)
         return created_key
 
-    # TODO: failing with Serialization error
     def _create_ec_key(self, client, key_name, key_type):
         # create ec key with optional arguments
-        key_curve = ["P-256"]
+        key_curve = "P-256"
         enabled = True
         tags = {"purpose": "unit test", "test name": "CreateECKeyTest"}
         created_key = client.create_ec_key(key_name, key_type=key_type, curve=key_curve, enabled=enabled)
         self.assertTrue(created_key.enabled, "Missing the optional key attributes.")
         self.assertEqual(enabled, created_key.enabled)
-        self.assertEqual(curve, created_key.curve)
-        self._validate_ec_key_bundle(created_key, vault_client.vault_url, key_name, key_type)
+        self.assertEqual(key_curve, created_key.curve)
+        self._validate_ec_key_bundle(created_key, client.vault_url, key_name, key_type)
         return created_key
 
     def _validate_ec_key_bundle(self, key_attributes, vault, key_name, kty, key_ops=None):
@@ -94,6 +93,7 @@ class KeyClientTests(KeyVaultTestCase):
         self.assertIsNotNone(vault_client)
         client = vault_client.keys
 
+        # TODO: failing with Serialization error
         # create ec key
         # created_ec_key = self._create_ec_key(client, key_name="crud-ec-key", key_type="EC")
 
@@ -134,6 +134,7 @@ class KeyClientTests(KeyVaultTestCase):
 
     @ResourceGroupPreparer()
     @VaultClientPreparer()
+    def test_backup_restore(self, vault_client, **kwargs):
 
         self.assertIsNotNone(vault_client)
         client = vault_client.keys
