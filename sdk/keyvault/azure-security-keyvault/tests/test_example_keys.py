@@ -19,7 +19,7 @@ def create_vault_client():
     vault_url = ""
 
     # [START create_vault_client
-    from azure.keyvault.vault_client import VaultClient
+    from azure.security.keyvault.vault_client import VaultClient
     from azure.common.credentials import ServicePrincipalCredentials
 
     credentials = ServicePrincipalCredentials(
