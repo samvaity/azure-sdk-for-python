@@ -26,7 +26,7 @@ class KeyVaultCertificateTest(KeyvaultTestCase):
     def _validate_certificate_operation(self, pending_cert, vault, cert_name, cert_policy):
         self.assertIsNotNone(pending_cert)
         self.assertIsNotNone(pending_cert.csr)
-        self.assertEqual(cert_policy.issuer_parameters.name, pending_cert.issuer_parameters.name)
+        self.assertEqual(cert_policy.issuer_parameters.name, pending_cert.issuer_name)
         pending_id = KeyVaultId.parse_certificate_operation_id(pending_cert.id)
         self.assertEqual(pending_id.vault.strip('/'), vault.strip('/'))
         self.assertEqual(pending_id.name, cert_name)
@@ -123,14 +123,13 @@ class KeyVaultCertificateTest(KeyvaultTestCase):
             pending_cert = self.client.get_certificate_operation(vault_uri, cert_name)
             self._validate_certificate_operation(pending_cert, vault_uri, cert_name, cert_policy)
             if pending_cert.status.lower() == 'completed':
-                cert_id = KeyVaultId.parse_certificate_operation_id(pending_cert.target)
                 break
             elif pending_cert.status.lower() != 'inprogress':
                 raise Exception('Unknown status code for pending certificate: {}'.format(pending_cert))
             time.sleep(interval_time)
 
         # get certificate
-        cert_bundle = self.client.get_certificate(cert_id.vault, cert_id.name, '')
+        cert_bundle = self.client.get_certificate(cert_id.name)
         self._validate_certificate_bundle(cert_bundle, vault_uri, cert_name, cert_policy)
 
         # get certificate as secret
@@ -148,7 +147,7 @@ class KeyVaultCertificateTest(KeyvaultTestCase):
 
         # get certificate returns not found
         try:
-            self.client.get_certificate(cert_id.vault, cert_id.name, '')
+            self.client.get_certificate(cert_id.name)
             self.fail('Get should fail')
         except Exception as ex:
             if not hasattr(ex, 'message') or 'not found' not in ex.message.lower():

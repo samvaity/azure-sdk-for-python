@@ -1,5 +1,19 @@
 {
     "git.ignoreLimitWarning": true,
     "python.unitTest.pyTestArgs": [],
-    "python.unitTest.pyTestEnabled": true
+    "python.unitTest.pyTestEnabled": true,
+    "python.testing.pyTestArgs": [
+        "sdk"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pyTestEnabled": true,
+    "python.pythonPath": "env37\\Scripts\\python.exe",
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./sdk",
+        "-p",
+        "test_*.py"
+    ]
 }
