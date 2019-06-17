@@ -21,6 +21,9 @@ from azure.security.keyvault._generated.v7_0.models import (
     OrganizationDetails,
     AdministratorDetails,
     Contact,
+    LifetimeAction,
+    Action,
+    Trigger,
 )
 
 
@@ -64,9 +67,9 @@ class CertificateClientTests(KeyVaultTestCase):
                 cert_policy.x509_certificate_properties.subject_alternative_names.dns_names,
                 cert.policy.subject_alternative_dns_names,
             )
-        if cert_policy.lifetime_actions:
-            self.assertEqual(cert_policy.lifetime_action.trigger.lifetime_percentage, cert.policy.lifetime_action[0].lifetime_percentage)
-            self.assertEqual(cert_policy.lifetime_action.action.action_type, cert.policy.lifetime_action[0].action_type)
+        # if cert_policy.lifetime_actions:
+            # self.assertEqual(list(cert_policy.lifetime_actions)[0].trigger.lifetime_percentage, cert.policy.lifetime_actions[0].lifetime_percentage)
+            # self.assertEqual(list(cert_policy.lifetime_actions)[0].action.action_type, cert.policy.lifetime_actions[0].action_type)
         
         self._validate_certificate_key_properties(cert_policy.key_properties, cert.policy.key_properties)
         if cert_policy.x509_certificate_properties.ekus:
@@ -119,6 +122,14 @@ class CertificateClientTests(KeyVaultTestCase):
         self.assertIsNotNone(vault_client)
         client = vault_client.certificates
         cert_name = self.get_resource_name("cert")
+        lifetime_action=LifetimeAction(
+                trigger=Trigger(
+                    lifetime_percentage=20
+                ),
+                action=Action(
+                    action_type="AutoRenew"
+                )
+            )
         cert_policy = CertificatePolicy(
             key_properties=KeyProperties(exportable=True, key_type="RSA", key_size=2048, reuse_key=False),
             secret_properties=SecretProperties(content_type="application/x-pkcs12"),
@@ -130,14 +141,7 @@ class CertificateClientTests(KeyVaultTestCase):
                 ),
                 validity_in_months=24,
             ),
-            lifetime_actions=LifetimeActions(
-                trigger=Trigger(
-                    lifetime_percentage=20
-                ),
-                action=Action(
-                    action_type="AutoRenew"
-                )
-            )
+            lifetime_actions=[lifetime_action]
         )
         # create certificate
         cert_operation = client.create_certificate(cert_name, policy=cert_policy)

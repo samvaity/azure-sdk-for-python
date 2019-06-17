@@ -244,7 +244,7 @@ class CertificateBundle(Model):
     sending a request.
 
     :ivar id: The certificate id.
-    :vartype id: str
+    :vartype id: str    
     :ivar kid: The key id.
     :vartype kid: str
     :ivar sid: The secret id.

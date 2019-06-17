@@ -5,23 +5,6 @@
 # --------------------------------------------------------------------------
 from typing import Any, Dict, Mapping, Optional
 from datetime import datetime
-from .._generated.v7_0 import models
-from .._internal import _KeyVaultClientBase
-from ._models import (
-    Certificate,
-    CertificateBase,
-    DeletedCertificate,
-    CertificatePolicy,
-    Issuer,
-    IssuerBase,
-    Contact,
-    CertificateOperation,
-)
-
-from azure.core.pipeline import Pipeline
-from azure.core.pipeline.transport import RequestsTransport
-from azure.security.keyvault._internal import _BearerTokenCredentialPolicy
-
 from .._internal import _KeyVaultClientBase
 from ._models import (
     Certificate,

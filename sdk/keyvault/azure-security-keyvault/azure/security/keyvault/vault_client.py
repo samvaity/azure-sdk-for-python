@@ -3,6 +3,11 @@
 # Licensed under the MIT License. See LICENSE.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
+from ._internal import _KeyVaultClientBase
+from .keys._client import KeyClient
+from .secrets._client import SecretClient
+from .certificates._client import CertificateClient
+
 try:
     from typing import TYPE_CHECKING
 except ImportError:
@@ -39,6 +44,7 @@ class VaultClient(_KeyVaultClientBase):
         )
         self._secrets = SecretClient(self.vault_url, credential, generated_client=self._client, **kwargs)
         self._keys = KeyClient(self.vault_url, credential, generated_client=self._client, **kwargs)
+        self._certificates = CertificateClient(self.vault_url, credential, generated_client=self._client, **kwargs)
 
     @property
     def secrets(self):
