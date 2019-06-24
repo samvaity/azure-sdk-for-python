@@ -22,7 +22,7 @@ class CertificateClient(_KeyVaultClientBase):
     """CertificateClient defines a high level interface for
     managing certificates in the specified vault.
     Example:
-        .. literalinclude:: ../tests/test_examples_certificates_sync.py
+        .. literalinclude:: ../tests/test_examples_certificates.py
             :start-after: [START create_certificate_client]
             :end-before: [END create_certificate_client]
             :language: python

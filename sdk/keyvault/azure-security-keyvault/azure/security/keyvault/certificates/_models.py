@@ -334,9 +334,9 @@ class CertificatePolicy(object):
         key_properties,
         content_type,
         subject_name,
-        subject_alternative_emails,
-        subject_alternative_dns_names,
-        subject_alternative_upns,
+        sans_emails,
+        sans_dns_names,
+        sans_upns,
         validity_in_months,
         lifetime_actions,
         issuer_name,
@@ -349,9 +349,9 @@ class CertificatePolicy(object):
         self._key_properties = key_properties
         self._content_type = content_type
         self._subject_name = subject_name
-        self._subject_alternative_emails = subject_alternative_emails
-        self._subject_alternative_dns_names = subject_alternative_dns_names
-        self._subject_alternative_upns = subject_alternative_upns
+        self._sans_emails = sans_emails
+        self._sans_dns_names = sans_dns_names
+        self._sans_upns = sans_upns
         self._validity_in_months = validity_in_months
         self._lifetime_actions = lifetime_actions
         self._issuer_name = issuer_name
@@ -368,18 +368,18 @@ class CertificatePolicy(object):
             issuer_name=certificate_policy_bundle.issuer_parameters.name,
             certificate_type=certificate_policy_bundle.issuer_parameters.certificate_type,
             certificate_transparency=certificate_policy_bundle.issuer_parameters.certificate_transparency,
-            lifetime_actions=(
+            lifetime_actions=[
                 LifetimeAction(
                     action_type=item.action,
                     lifetime_percentage=item.lifetime_percentage or None,
                     days_before_expiry=item.days_before_expiry or None,
-                )
+                ]
                 for item in certificate_policy_bundle.lifetime_actions
             ),
             subject_name=certificate_policy_bundle.x509_certificate_properties.subject,
-            subject_alternative_emails=certificate_policy_bundle.x509_certificate_properties.subject_alternative_names.emails,
-            subject_alternative_upns=certificate_policy_bundle.x509_certificate_properties.subject_alternative_names.upns,
-            subject_alternative_dns_names=certificate_policy_bundle.x509_certificate_properties.subject_alternative_names.dns_names,
+            sans_emails=certificate_policy_bundle.x509_certificate_properties.subject_alternative_names.emails,
+            sans_upns=certificate_policy_bundle.x509_certificate_properties.subject_alternative_names.upns,
+            sans_dns_names=certificate_policy_bundle.x509_certificate_properties.subject_alternative_names.dns_names,
             validity_in_months=certificate_policy_bundle.x509_certificate_properties.validity_in_months,
             key_properties=KeyProperties(
                 exportable=certificate_policy_bundle.key_properties.exportable,
@@ -415,19 +415,19 @@ class CertificatePolicy(object):
         return self._subject_name
 
     @property
-    def subject_alternative_emails(self):
+    def sans_emails(self):
         # type: () -> list[str]
-        return self._subject_alternative_emails
+        return self._sans_emails
 
     @property
-    def subject_alternative_dns_names(self):
+    def sans_dns_names(self):
         # type: () -> list[str]
-        return self._subject_alternative_dns_names
+        return self._sans_dns_names
 
     @property
-    def subject_alternative_upns(self):
+    def sans_upns(self):
         # type: () -> list[str]
-        return self._subject_alternative_upns
+        return self._sans_upns
 
     @property
     def validity_in_months(self):
@@ -573,7 +573,7 @@ class Issuer(IssuerBase):
             account_id=issuer_bundle.account_id,
             password=issuer_bundle.password,
             organization_id=issuer_bundle.organization_details.id,
-            admin_details=(AdministratorDetails._from_admin_details_bundle(item) for item in issuer_bundle),
+            admin_details=[AdministratorDetails._from_admin_details_bundle(item) for item in issuer_bundle],
         )
 
     @property
