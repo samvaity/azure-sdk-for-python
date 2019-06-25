@@ -13,10 +13,6 @@ try:
 except ImportError:
     TYPE_CHECKING = False
 
-from ._internal import _KeyVaultClientBase
-from .keys._client import KeyClient
-from .secrets._client import SecretClient
-
 if TYPE_CHECKING:
     # pylint:disable=unused-import
     from azure.core import Configuration
@@ -60,9 +56,9 @@ class VaultClient(_KeyVaultClientBase):
         """
         return self._keys
 
-    # @property
-    # def certificates(self):
-    #     """
-    #     :rtype: ~azure.security.keyvault.certificates.CertificateClient
-    #     """
-    #     pass
+    @property
+    def certificates(self):
+        """
+        :rtype: ~azure.security.keyvault.certificates.CertificateClient
+        """
+        return self._certificates

@@ -369,13 +369,13 @@ class CertificatePolicy(object):
             certificate_type=certificate_policy_bundle.issuer_parameters.certificate_type,
             certificate_transparency=certificate_policy_bundle.issuer_parameters.certificate_transparency,
             lifetime_actions=[
-                LifetimeAction(
+                LifetimeActions(
                     action_type=item.action,
-                    lifetime_percentage=item.lifetime_percentage or None,
-                    days_before_expiry=item.days_before_expiry or None,
-                ]
+                    lifetime_percentage=item.trigger.lifetime_percentage or None,
+                    days_before_expiry=item.trigger.days_before_expiry or None,
+                )
                 for item in certificate_policy_bundle.lifetime_actions
-            ),
+            ],
             subject_name=certificate_policy_bundle.x509_certificate_properties.subject,
             sans_emails=certificate_policy_bundle.x509_certificate_properties.subject_alternative_names.emails,
             sans_upns=certificate_policy_bundle.x509_certificate_properties.subject_alternative_names.upns,
@@ -637,7 +637,7 @@ class KeyProperties(object):
         return self._key_usage
 
 
-class LifetimeAction(object):
+class LifetimeActions(object):
     """Action and its trigger that will be performed by certificate Vault over the
     lifetime of a certificate.
     """
