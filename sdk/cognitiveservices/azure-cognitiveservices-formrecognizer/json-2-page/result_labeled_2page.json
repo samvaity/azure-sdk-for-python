@@ -1,0 +1,489 @@
+{
+  "status": "succeeded",
+  "createdDateTime": "2020-03-11T03:35:09Z",
+  "lastUpdatedDateTime": "2020-03-11T03:35:21Z",
+  "analyzeResult": {
+    "version": "2.0.0",
+    "readResults": [
+      {
+        "page": 1,
+        "language": "en",
+        "angle": 0,
+        "width": 8.5,
+        "height": 11,
+        "unit": "inch"
+      },
+      {
+        "page": 2,
+        "language": "en",
+        "angle": 0,
+        "width": 8.5,
+        "height": 11,
+        "unit": "inch"
+      }
+    ],
+    "pageResults": [
+      {
+        "page": 1,
+        "tables": [
+          {
+            "rows": 7,
+            "columns": 3,
+            "cells": [
+              {
+                "rowIndex": 0,
+                "columnIndex": 0,
+                "text": "Invoice Number",
+                "boundingBox": [
+                  1.8175,
+                  2.8383,
+                  3.4403,
+                  2.8383,
+                  3.4403,
+                  3.5066,
+                  1.8175,
+                  3.5066
+                ]
+              },
+              {
+                "rowIndex": 0,
+                "columnIndex": 1,
+                "text": "Invoice Date",
+                "boundingBox": [
+                  3.4403,
+                  2.8383,
+                  5.064,
+                  2.8383,
+                  5.064,
+                  3.5066,
+                  3.4403,
+                  3.5066
+                ]
+              },
+              {
+                "rowIndex": 0,
+                "columnIndex": 2,
+                "text": "Charges",
+                "boundingBox": [
+                  5.064,
+                  2.8383,
+                  6.6868,
+                  2.8383,
+                  6.6868,
+                  3.5066,
+                  5.064,
+                  3.5066
+                ]
+              },
+              {
+                "rowIndex": 1,
+                "columnIndex": 0,
+                "text": "234324",
+                "boundingBox": [
+                  1.8175,
+                  3.5066,
+                  3.4403,
+                  3.5066,
+                  3.4403,
+                  4.4428,
+                  1.8175,
+                  4.4428
+                ]
+              },
+              {
+                "rowIndex": 1,
+                "columnIndex": 1,
+                "text": "3/10/20",
+                "boundingBox": [
+                  3.4403,
+                  3.5066,
+                  5.064,
+                  3.5066,
+                  5.064,
+                  4.4428,
+                  3.4403,
+                  4.4428
+                ]
+              },
+              {
+                "rowIndex": 1,
+                "columnIndex": 2,
+                "text": "$28.00",
+                "boundingBox": [
+                  5.064,
+                  3.5066,
+                  6.6868,
+                  3.5066,
+                  6.6868,
+                  4.4428,
+                  5.064,
+                  4.4428
+                ]
+              },
+              {
+                "rowIndex": 2,
+                "columnIndex": 0,
+                "text": "653452",
+                "boundingBox": [
+                  1.8175,
+                  4.4428,
+                  3.4403,
+                  4.4428,
+                  3.4403,
+                  5.4011,
+                  1.8175,
+                  5.4011
+                ]
+              },
+              {
+                "rowIndex": 2,
+                "columnIndex": 1,
+                "text": "3/11/2020",
+                "boundingBox": [
+                  3.4403,
+                  4.4428,
+                  5.064,
+                  4.4428,
+                  5.064,
+                  5.4011,
+                  3.4403,
+                  5.4011
+                ]
+              },
+              {
+                "rowIndex": 2,
+                "columnIndex": 2,
+                "text": "$43.00",
+                "boundingBox": [
+                  5.064,
+                  4.4428,
+                  6.6868,
+                  4.4428,
+                  6.6868,
+                  5.4011,
+                  5.064,
+                  5.4011
+                ]
+              },
+              {
+                "rowIndex": 3,
+                "columnIndex": 0,
+                "text": "235425",
+                "boundingBox": [
+                  1.8175,
+                  5.4011,
+                  3.4403,
+                  5.4011,
+                  3.4403,
+                  6.2611,
+                  1.8175,
+                  6.2611
+                ]
+              },
+              {
+                "rowIndex": 3,
+                "columnIndex": 1,
+                "text": "3/12/2020",
+                "boundingBox": [
+                  3.4403,
+                  5.4011,
+                  5.064,
+                  5.4011,
+                  5.064,
+                  6.2611,
+                  3.4403,
+                  6.2611
+                ]
+              },
+              {
+                "rowIndex": 3,
+                "columnIndex": 2,
+                "text": "$453.00",
+                "boundingBox": [
+                  5.064,
+                  5.4011,
+                  6.6868,
+                  5.4011,
+                  6.6868,
+                  6.2611,
+                  5.064,
+                  6.2611
+                ]
+              },
+              {
+                "rowIndex": 4,
+                "columnIndex": 0,
+                "text": "134134",
+                "boundingBox": [
+                  1.8175,
+                  6.2611,
+                  3.4403,
+                  6.2611,
+                  3.4403,
+                  7.4582,
+                  1.8175,
+                  7.4582
+                ]
+              },
+              {
+                "rowIndex": 4,
+                "columnIndex": 1,
+                "text": "3/13/2020",
+                "boundingBox": [
+                  3.4403,
+                  6.2611,
+                  5.064,
+                  6.2611,
+                  5.064,
+                  7.4582,
+                  3.4403,
+                  7.4582
+                ]
+              },
+              {
+                "rowIndex": 4,
+                "columnIndex": 2,
+                "text": "$413.00",
+                "boundingBox": [
+                  5.064,
+                  6.2611,
+                  6.6868,
+                  6.2611,
+                  6.6868,
+                  7.4582,
+                  5.064,
+                  7.4582
+                ]
+              },
+              {
+                "rowIndex": 5,
+                "columnIndex": 0,
+                "text": "654654",
+                "boundingBox": [
+                  1.8175,
+                  7.4582,
+                  3.4403,
+                  7.4582,
+                  3.4403,
+                  8.4682,
+                  1.8175,
+                  8.4682
+                ]
+              },
+              {
+                "rowIndex": 5,
+                "columnIndex": 1,
+                "text": "3/14/2020",
+                "boundingBox": [
+                  3.4403,
+                  7.4582,
+                  5.064,
+                  7.4582,
+                  5.064,
+                  8.4682,
+                  3.4403,
+                  8.4682
+                ]
+              },
+              {
+                "rowIndex": 5,
+                "columnIndex": 2,
+                "text": "$433.00",
+                "boundingBox": [
+                  5.064,
+                  7.4582,
+                  6.6868,
+                  7.4582,
+                  6.6868,
+                  8.4682,
+                  5.064,
+                  8.4682
+                ]
+              },
+              {
+                "rowIndex": 6,
+                "columnIndex": 0,
+                "text": "234234",
+                "boundingBox": [
+                  1.8175,
+                  8.4682,
+                  3.4403,
+                  8.4682,
+                  3.4403,
+                  9.5443,
+                  1.8175,
+                  9.5443
+                ]
+              },
+              {
+                "rowIndex": 6,
+                "columnIndex": 1,
+                "text": "3/15/2020",
+                "boundingBox": [
+                  3.4403,
+                  8.4682,
+                  5.064,
+                  8.4682,
+                  5.064,
+                  9.5443,
+                  3.4403,
+                  9.5443
+                ]
+              },
+              {
+                "rowIndex": 6,
+                "columnIndex": 2,
+                "text": "$423.00",
+                "boundingBox": [
+                  5.064,
+                  8.4682,
+                  6.6868,
+                  8.4682,
+                  6.6868,
+                  9.5443,
+                  5.064,
+                  9.5443
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "page": 2,
+        "tables": []
+      }
+    ],
+    "documentResults": [
+      {
+        "docType": "custom:form",
+        "pageRange": [
+          1,
+          2
+        ],
+        "fields": {
+          "InvoiceDate": {
+            "type": "string",
+            "valueString": "Invoice Date",
+            "text": "Invoice Date",
+            "page": 1,
+            "boundingBox": [
+              3.865,
+              2.8850000000000002,
+              4.6450000000000005,
+              2.8850000000000002,
+              4.6450000000000005,
+              2.99,
+              3.865,
+              2.99
+            ],
+            "confidence": 1.0
+          },
+          "Address": {
+            "type": "string",
+            "valueString": "1 Redmond way Suite 6000 Redmond, WA 99243",
+            "text": "1 Redmond way Suite 6000 Redmond, WA 99243",
+            "page": 1,
+            "boundingBox": [
+              1.34,
+              1.595,
+              2.535,
+              1.595,
+              2.535,
+              2.05,
+              1.34,
+              2.05
+            ],
+            "confidence": 1.0
+          },
+          "Charges": {
+            "type": "string",
+            "valueString": "Charges",
+            "text": "Charges",
+            "page": 1,
+            "boundingBox": [
+              5.63,
+              2.88,
+              6.125,
+              2.88,
+              6.125,
+              3.015,
+              5.63,
+              3.015
+            ],
+            "confidence": 1.0
+          },
+          "Total": {
+            "type": "string",
+            "valueString": "$38,000",
+            "text": "$38,000",
+            "page": 2,
+            "boundingBox": [
+              5.5200000000000005,
+              2.435,
+              6.15,
+              2.435,
+              6.15,
+              2.61,
+              5.5200000000000005,
+              2.61
+            ],
+            "confidence": 1.0
+          },
+          "InvoiceNumber": {
+            "type": "string",
+            "valueString": "Invoice Number",
+            "text": "Invoice Number",
+            "page": 1,
+            "boundingBox": [
+              2.1350000000000002,
+              2.88,
+              3.13,
+              2.88,
+              3.13,
+              2.99,
+              2.1350000000000002,
+              2.99
+            ],
+            "confidence": 1.0
+          },
+          "MerchantName": {
+            "type": "string",
+            "valueString": "Contoso",
+            "text": "Contoso",
+            "page": 1,
+            "boundingBox": [
+              1.11,
+              1.135,
+              1.92,
+              1.135,
+              1.92,
+              1.32,
+              1.11,
+              1.32
+            ],
+            "confidence": 1.0
+          },
+          "InvoiceFor": {
+            "type": "string",
+            "valueString": "Microsoft 1020 Enterprise Way Sunnayvale, CA 87659",
+            "text": "Microsoft 1020 Enterprise Way Sunnayvale, CA 87659",
+            "page": 1,
+            "boundingBox": [
+              5.1850000000000005,
+              1.43,
+              6.485,
+              1.43,
+              6.485,
+              1.905,
+              5.1850000000000005,
+              1.905
+            ],
+            "confidence": 1.0
+          }
+        }
+      }
+    ],
+    "errors": []
+  }
+}
